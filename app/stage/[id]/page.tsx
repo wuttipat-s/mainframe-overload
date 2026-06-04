@@ -1,10 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-
-// ป้องกันข้อผิดพลาดในการคอมไพล์ (Compile Error) บนระบบ Preview 
-// โดยการระบุชื่อแพ็กเกจผ่านตัวแปร เพื่อหลีกเลี่ยงการวิเคราะห์แบบ Static ของ Bundler
-const supabasePackageName = "@supabase" + "/supabase-js";
+import { useRouter, useParams } from "next/navigation";
+import { supabase } from "@/lib/supabase"; // ดึงตัวเชื่อมต่อมาตรฐานกลาง
 
 interface Mission {
   title: string;
@@ -24,7 +22,7 @@ const STAGE_MISSIONS: Record<string, Mission> = {
   },
   "2": {
     title: "STAGE_02: เจาะรหัสพิกัดหน่วยความจำ (The Array Indexing)",
-    story: "ภารกิจ: นำ \"ตัวเลขคำตอบยาวๆ จากด่านที่ 1\" มาแยกออกเป็นตัวเลขทีละหลัก (เรียงจากซ้ายไปขวา) เพื่อใช้เป็น Index (ตำแหน่งพิกัด) ในการดึงตัวอักษรออกจากกล่องข้อมูลทั้ง 9 กล่องตามลำดับ แล้วนำมาต่อกันเป็นคำศัพท์สำคัญ\n\n⚠️ แจ้งเตือนจากระบบ: ในโลกของ Software Engineer อาร์เรย์ตำแหน่งแรกสุดเราเริ่มนับจาก Index 0 เสมอ!\n\n• ตัวอักษรที่ 1 (เลขหลักที่ 1): [\"ก\", \"ข\", \"ค\", \"ง\", \"จ\", \"ซ\", \"ช\"]\n• ตัวอักษรที่ 2 (เลขหลักที่ 2): [\"ก\", \"ข\", \"ค\", \"ง\", \"อ\", \"จ\"]\n• ตัวอักษรที่ 3 (เลขหลักที่ 3): [\"ฟ\", \"ป\", \"ผ\", \"ฝ\"]\n• ตัวอักษรที่ 4 (เลขหลักที่ 4): [\"ต\", \"ถ\", \"ท\", \"ธ\"]\n• ตัวอักษรที่ 5 (เลขหลักที่ 5): [\"ะ\", \"า\", \"์\", \"ิ\"]\n• ตัวอักษรที่ 6 (เลขหลักที่ 6): [\"เ\", \"โ\", \"ใ\", \"ไ\", \"า\", \"ะ\", \"แ\"]\n• ตัวอักษรที่ 7 (เลขหลักที่ 7): [\"ก\", \"ข\", \"ค\", \"ง\", \"จ\", \"ฉ\", \"ช\", \"ซ\", \"ว\"]\n• ตัวอักษรที่ 8 (เลขหลักที่ 8): [\"ก\", \"ข\", \"ค\", \"ง\", \"จ\", \"ฉ\", \"ช\", \"ซ\", \"ฌ\", \"ร\"]\n• ตัวอักษรที่ 9 (เลขหลักที่ 9): [\"ะ\", \"า\", \"ิ\", \"ี\", \"์\"]",
+    story: "ภารกิจ: นำ \"ตัวเลขคำตอบยาวๆ จากด่านที่ 1\" มาแยกออกเป็นตัวเลขทีละหลัก (เรียงจากซ้ายไปขวา) เพื่อใช้เป็น Index (ตำแหน่งพิกัด) ในการดึงตัวอักษรออกจากกล่องข้อมูลทั้ง 9 กล่องตามลำดับ แล้วนำมาต่อกันเป็นคำศัพท์สำคัญ\n\n⚠️ แจ้งเตือนจากระบบ: ในโลก of Software Engineer อาร์เรย์ตำแหน่งแรกสุดเราเริ่มนับจาก Index 0 เสมอ!\n\n• ตัวอักษรที่ 1 (เลขหลักที่ 1): [\"ก\", \"ข\", \"ค\", \"ง\", \"จ\", \"ซ\", \"ช\"]\n• ตัวอักษรที่ 2 (เลขหลักที่ 2): [\"ก\", \"ข\", \"ค\", \"ง\", \"อ\", \"จ\"]\n• ตัวอักษรที่ 3 (เลขหลักที่ 3): [\"ฟ\", \"ป\", \"ผ\", \"ฝ\"]\n• ตัวอักษรที่ 4 (เลขหลักที่ 4): [\"ต\", \"ถ\", \"ท\", \"ธ\"]\n• ตัวอักษรที่ 5 (เลขหลักที่ 5): [\"ะ\", \"า\", \"์\", \"ิ\"]\n• ตัวอักษรที่ 6 (เลขหลักที่ 6): [\"เ\", \"โ\", \"ใ\", \"ไ\", \"า\", \"ะ\", \"แ\"]\n• ตัวอักษรที่ 7 (เลขหลักที่ 7): [\"ก\", \"ข\", \"ค\", \"ง\", \"จ\", \"ฉ\", \"ช\", \"ซ\", \"ว\"]\n• ตัวอักษรที่ 8 (เลขหลักที่ 8): [\"ก\", \"ข\", \"ค\", \"ง\", \"จ\", \"ฉ\", \"ช\", \"ซ\", \"ฌ\", \"ร\"]\n• ตัวอักษรที่ 9 (เลขหลักที่ 9): [\"ะ\", \"า\", \"ิ\", \"ี\", \"์\"]",
     hint: "คำใบ้จากระบบ: ลองนำผลลัพธ์ด่าน 1 มาจิ้มทีละตัว เช่น ตัวแรกคือเลข 5 ลองไปนับตัวอักษรในวงเล็บแรกเริ่มจาก 0 ดูสิ!",
     label: "ENTER CORE SYSTEM WORD (คำศัพท์ภาษาไทยที่เป็นหัวใจของภาคเรา)",
     placeholder: "กรอกคำศัพท์ภาษาไทย..."
@@ -38,15 +36,13 @@ const STAGE_MISSIONS: Record<string, Mission> = {
   }
 };
 
-interface PageProps {
-  params: { id: string };
-}
+export default function StagePage() {
+  const router = useRouter();
+  const rawParams = useParams();
+  
+  // ใช้ useParams() ดึงค่าโดยตรงและแปลงเป็นข้อความ ปลอดภัยจากปัญหา Promise บน Next.js 15
+  const stageId = (rawParams?.id as string) || "1";
 
-export default function StagePage({ params }: PageProps) {
-  // ดึงค่า stageId แบบ Synchronous ดั้งเดิม
-  const stageId = params.id || "1";
-
-  const [supabase, setSupabase] = useState<any>(null);
   const [username, setUsername] = useState("");
   const [playerId, setPlayerId] = useState("");
   const [userAnswer, setUserAnswer] = useState("");
@@ -58,48 +54,13 @@ export default function StagePage({ params }: PageProps) {
   const [cooldownLeft, setCooldownLeft] = useState(0);
   const [isCleared, setIsCleared] = useState(false);
 
-  // ดึง Supabase Client แบบ Hybrid (รองรับทั้ง Vercel ในเครื่องจริง และ CDN บนระบบจำลอง Preview)
-  useEffect(() => {
-    const initSupabase = () => {
-      const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-      const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
-      
-      let clientInstance: any = null;
-
-      // 1. ถ้าทำงานบนหน้าเว็บ Preview ให้พยายามดึงตัวแปร global ที่มาจาก CDN 
-      if (typeof window !== "undefined" && (window as any).supabase) {
-        clientInstance = (window as any).supabase.createClient(url, key);
-      } else {
-        // 2. ถ้าอยู่บน Vercel/Next.js ทั่วไป จะเรียกใช้โมดูลผ่าน require แบบยืดหยุ่นเพื่อไม่ให้ esbuild แจ้ง error
-        try {
-          const { createClient } = require(supabasePackageName);
-          clientInstance = createClient(url, key);
-        } catch (e) {
-          console.warn("Supabase library not dynamically resolved. Running in fallback mode.");
-        }
-      }
-      setSupabase(clientInstance);
-    };
-
-    // โหลด Supabase CDN สำหรับหน้าจำลอง Preview Canvas
-    if (typeof window !== "undefined" && !(window as any).supabase) {
-      const script = document.createElement("script");
-      script.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
-      script.async = true;
-      script.onload = () => initSupabase();
-      document.head.appendChild(script);
-    } else {
-      initSupabase();
-    }
-  }, []);
-
-  // ฟังก์ชันสแกนตรวจสอบสิทธิ์และความคืบหน้าเรียลไทม์
-  const checkAccessAndLockState = async (currentPlayerId: string, currentClient: any) => {
-    if (!currentPlayerId || !stageId || !currentClient) return;
+  // ตรวจสอบความคืบหน้าของผู้เล่นและสถานะล็อกด่าน
+  const checkAccessAndLockState = async (currentPlayerId: string) => {
+    if (!currentPlayerId || !stageId) return;
 
     try {
-      // 1. ตรวจสอบประวัติความคืบหน้า
-      const { data: progress } = await currentClient
+      // 1. ตรวจสอบความคืบหน้าของผู้เล่นปัจจุบัน
+      const { data: progress } = await supabase
         .from("player_progress")
         .select("current_stage, is_completed")
         .eq("player_id", currentPlayerId)
@@ -113,8 +74,8 @@ export default function StagePage({ params }: PageProps) {
         }
       }
 
-      // 2. ดึงคอนฟิกและเวลาปลดล็อกสากลจากแอดมิน
-      const { data: config } = await currentClient
+      // 2. ดึงการตั้งค่าล็อก/เฉลยด่านจากฐานข้อมูลแอดมิน
+      const { data: config } = await supabase
         .from("game_config")
         .select("unlock_time, is_active, secret_answer")
         .eq("level_id", parseInt(stageId))
@@ -123,7 +84,6 @@ export default function StagePage({ params }: PageProps) {
       if (config) {
         setDbCorrectAnswer(config.secret_answer || "");
         
-        // ถ้าเคยผ่านแล้ว ให้ดึงคำตอบที่ถูกต้องมาแสดงในกล่องค้างไว้เลย
         if (alreadyCleared) {
           setUserAnswer(config.secret_answer || "");
           setStatusMsg("✅ REVIEW MODE: คุณได้ทำการถอดรหัสด่านนี้สำเร็จไปแล้ว");
@@ -133,7 +93,6 @@ export default function StagePage({ params }: PageProps) {
         const unlockDate = new Date(config.unlock_time);
         const isLockedByTime = Date.now() < unlockDate.getTime();
 
-        // โหมดตรวจสอบเวลาหน่วงนับถอยหลัง
         if (!alreadyCleared) {
           if (!isStageActive) {
             setIsLockedByAdmin(true);
@@ -150,7 +109,7 @@ export default function StagePage({ params }: PageProps) {
         }
       }
     } catch (err) {
-      console.error("Error verifying stage permission:", err);
+      console.error("Error reading database configuration:", err);
     }
   };
 
@@ -159,24 +118,18 @@ export default function StagePage({ params }: PageProps) {
     const storedName = localStorage.getItem("game_username");
 
     if (!storedId || !storedName) {
-      if (typeof window !== "undefined") {
-        window.location.href = "/";
-      }
+      router.push("/");
       return;
     }
     setPlayerId(storedId);
     setUsername(storedName);
 
-    if (supabase) {
-      checkAccessAndLockState(storedId, supabase);
-    }
+    checkAccessAndLockState(storedId);
     
-    const interval = setInterval(() => {
-      if (supabase) checkAccessAndLockState(storedId, supabase);
-    }, 5000);
-
+    // ตั้งตรวจสอบสถานะล็อกด่านแบบเรียลไทม์ทุกๆ 3 วินาที
+    const interval = setInterval(() => checkAccessAndLockState(storedId), 3000);
     return () => clearInterval(interval);
-  }, [stageId, supabase]);
+  }, [stageId, router]);
 
   useEffect(() => {
     if (cooldownLeft <= 0 || cooldownLeft === 999999) return;
@@ -188,14 +141,7 @@ export default function StagePage({ params }: PageProps) {
 
   const currentMission = STAGE_MISSIONS[stageId];
 
-  // นำทางกลับด้วยระบบเบราว์เซอร์ปกติ ป้องกันปัญหา Compile Error จาก dynamic imports
-  const handleBackToHub = () => {
-    if (typeof window !== "undefined") {
-      window.location.href = "/stage";
-    }
-  };
-
-  // ด่านเคลียร์ครบถ้วน
+  // กรณีผ่านครบถ้วนทุกด่าน
   if (!currentMission) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center bg-black font-mono p-6 text-[#2CFFB5]">
@@ -210,7 +156,7 @@ export default function StagePage({ params }: PageProps) {
           <button 
             onClick={() => { 
               localStorage.clear(); 
-              if (typeof window !== "undefined") window.location.href = "/";
+              router.push("/");
             }}
             className="text-xs border border-red-500 text-red-500 px-4 py-2 rounded hover:bg-red-500 hover:text-black transition-all"
           >
@@ -223,7 +169,7 @@ export default function StagePage({ params }: PageProps) {
 
   const handleVerifyAnswer = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isCleared || !supabase) return;
+    if (isCleared) return;
 
     setIsLoading(true);
     setStatusMsg("");
@@ -238,6 +184,7 @@ export default function StagePage({ params }: PageProps) {
         const nextStageNum = parseInt(stageId) + 1;
         const isGameFinished = nextStageNum > 3;
 
+        // บันทึกความก้าวหน้าลงใน Supabase
         const { error } = await supabase
           .from("player_progress")
           .upsert({
@@ -249,11 +196,10 @@ export default function StagePage({ params }: PageProps) {
 
         if (error) throw error;
 
-        // บันทึกลงหน่วยความจำชั่วคราว
         localStorage.setItem(`ans_${playerId}_stage_${stageId}`, userAnswer);
 
         setTimeout(() => {
-          handleBackToHub();
+          router.push(`/stage`);
         }, 1500);
 
       } catch (err: any) {
@@ -274,7 +220,7 @@ export default function StagePage({ params }: PageProps) {
           <span className="text-white font-bold">OPERATOR_ID:</span> <span className="text-[#2CFFB5] font-bold">{username || "FETCHING..."}</span>
         </div>
         <button
-          onClick={handleBackToHub}
+          onClick={() => router.push("/stage")}
           className="text-xs border border-neutral-800 text-neutral-400 px-3 py-1 rounded hover:border-[#2CFFB5] hover:text-white transition-colors"
         >
           RETURN TO MISSION_HUB
@@ -354,7 +300,7 @@ export default function StagePage({ params }: PageProps) {
       </div>
 
       <footer className="text-center text-[9px] text-neutral-700 mt-6">
-        TERMINAL OVERLOAD INTERFACE v2.1.0 - PERSISTENT STATE ENABLED
+        TERMINAL OVERLOAD INTERFACE v2.2.1 - PERSISTENT STATE ENABLED
       </footer>
     </main>
   );
