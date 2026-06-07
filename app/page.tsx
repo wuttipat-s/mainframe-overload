@@ -2,12 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@supabase/supabase-js";
-
-// เชื่อมต่อ Supabase
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+import { supabase } from "@/lib/supabase"; // ⚡ ใช้ตัวแชร์ศูนย์กลาง ลดปัญหา Instance ชนกัน
 
 export default function LoginPage() {
   const router = useRouter();
@@ -21,7 +16,7 @@ export default function LoginPage() {
     setIsLoading(true);
     setErrorMsg("");
 
-    // 🔥 ล้างค่าความจำค้างทั้งหมดก่อนเริ่มชงเซสชันใหม่
+    // 🔥 บรรทัดป้องกันบั๊ก: ล้างค่าความจำค้างทั้งหมดก่อนเริ่มชงเซสชันใหม่
     localStorage.clear();
 
     try {
@@ -29,24 +24,24 @@ export default function LoginPage() {
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
-        .eq("username", username.trim()) 
+        .eq("username", username.trim()) // ใช้ .trim() ป้องกันการก๊อปปี้เว้นวรรคเกินมา
         .eq("password", password.trim())
         .maybeSingle();
 
       if (error) throw error;
 
       if (data) {
-        // 2. บันทึกข้อมูลเซสชันลงเครื่องผู้ใช้ (LocalStorage)
+        // 2. บันทึกข้อมูลใหม่เอี่ยมลงเครื่องผู้ใช้ (LocalStorage)
         localStorage.setItem("game_player_id", data.id);
         localStorage.setItem("game_username", data.username);
         localStorage.setItem("game_role", data.role);
 
-        // 3. แยกเส้นทางตามบทบาทระบบ
+        // 3. แยกเส้นทาง (แอดมินไปหน้าควบคุม, ผู้เล่นไปหน้า MISSION_HUB)
         if (data.role === "admin") {
           router.push("/admin/dashboard");
         } else {
           
-          // ⚡ [ZONING FIX]: ตรวจสอบว่ามีข้อมูลความคืบหน้าของไอดีนี้ในฐานข้อมูลหรือยัง?
+          // ⚡ [AUTO-INSERT SYSTEM]: เช็คว่าไอดีผู้เล่นนี้มีอยู่ในตารางความคืบหน้าหรือยัง?
           const { data: checkProgress, error: progressError } = await supabase
             .from("player_progress")
             .select("player_id")
@@ -55,22 +50,23 @@ export default function LoginPage() {
 
           if (progressError) throw progressError;
 
-          // 🚨 ถ้าในตารางไม่มีข้อมูล (เป็น null) ให้ทำระบบ Auto-Generation สร้างให้อัตโนมัติทันที
+          // 🚨 ถ้าในตารางไม่มีข้อมูล (เป็น null ซึ่งตอนนี้ของพี่เป็นอยู่) บังคับสร้างแถวใหม่ให้ทันที!
           if (!checkProgress) {
             const { error: insertError } = await supabase
               .from("player_progress")
               .insert([
                 {
                   player_id: data.id,
-                  current_stage: 1,       // เริ่มต้นที่ด่าน 1
-                  is_completed: false,    // ยังเล่นไม่จบเกม
+                  current_stage: 1,      // เริ่มต้นด่าน 1
+                  is_completed: false,   // ยังเล่นไม่จบเกม
                 },
               ]);
             
             if (insertError) throw insertError;
+            console.log("Successfully generated player progress for:", data.username);
           }
 
-          // เมื่อเตรียมข้อมูลผู้เล่นในฐานข้อมูลสมบูรณ์แล้ว มั่นใจได้ว่าไม่มีทางโดนดีดกลับ วิ่งเข้าหน้าหลักเกมเลยครับ!
+          // เมื่อหลังบ้านมีข้อมูลรองรับแน่นอนแล้ว จะไม่มีทางโดนดีดกลับ วิ่งเข้าหน้าหลักเกมเลยครับ!
           router.push("/stage"); 
         }
       } else {
@@ -85,7 +81,6 @@ export default function LoginPage() {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-[#050505] p-6 font-mono selection:bg-[#2CFFB5] selection:text-black">
-      
       {/* Background Grid Effect */}
       <div className="absolute inset-0 z-0 opacity-20 pointer-events-none" 
            style={{ backgroundImage: 'radial-gradient(#2CFFB5 1px, transparent 1px)', backgroundSize: '40px 40px' }}>
@@ -110,7 +105,7 @@ export default function LoginPage() {
         <form onSubmit={handleLogin} className="space-y-6 pt-4">
           <div className="space-y-2">
             <label className="text-[10px] uppercase text-neutral-400 tracking-wider">
-              Username (คือ TEAM_01)
+              Username
             </label>
             <input
               type="text"
@@ -124,7 +119,7 @@ export default function LoginPage() {
 
           <div className="space-y-2">
             <label className="text-[10px] uppercase text-neutral-400 tracking-wider">
-              Password (คือ 123456)
+              Password
             </label>
             <input
               type="password"

@@ -2,11 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@supabase/supabase-js";
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+import { supabase } from "@/lib/supabase"; // ⚡ เปลี่ยนมาใช้ตัวแชร์ส่วนกลาง ลดปัญหา Instance ชนกัน
 
 interface StageConfig {
   level_id: number;
@@ -27,17 +23,31 @@ export default function StageSelectionPage() {
   const loadDashboardData = async (userId: string) => {
     if (!userId) return;
     try {
-      const { data: progress } = await supabase
+      // ดึงข้อมูลความคืบหน้าผู้เล่น
+      let { data: progress, error: fetchError } = await supabase
         .from("player_progress")
         .select("current_stage, is_completed")
         .eq("player_id", userId)
         .maybeSingle();
+
+      // 🚨 [FAIL-SAFE] ถ้าหากหน้า Login ทำงานพลาดแล้วไม่ยอมสร้างข้อมูล ให้หน้าจอนี้จัดการสร้างแถวใหม่ให้ทันที กันผู้เล่นติดลูปดีดออก
+      if (!progress && !fetchError) {
+        console.log("Fail-safe triggered: Generating missing player progress record...");
+        const { data: newProgress } = await supabase
+          .from("player_progress")
+          .insert([{ player_id: userId, current_stage: 1, is_completed: false }])
+          .select()
+          .maybeSingle();
+        
+        if (newProgress) progress = newProgress;
+      }
 
       if (progress) {
         setCurrentStage(Number(progress.current_stage));
         setIsGameCompleted(progress.is_completed);
       }
 
+      // ดึงข้อมูลการตั้งค่าด่านจากแอดมิน
       const { data: configs } = await supabase
         .from("game_config")
         .select("level_id, unlock_time, is_active")
@@ -59,26 +69,22 @@ export default function StageSelectionPage() {
   };
 
   useEffect(() => {
-    // ⚡ หน่วงเวลาเล็กน้อย (100ms) เพื่อรอให้ Browser อัปเดต LocalStorage จากหน้า Login ให้เสร็จชัวร์ๆ ก่อนเช็ค
-    const checkSession = setTimeout(() => {
-      const storedId = localStorage.getItem("game_player_id");
-      const storedName = localStorage.getItem("game_username");
+    // เช็ค Session ความปลอดภัยฝั่ง Client
+    const storedId = localStorage.getItem("game_player_id");
+    const storedName = localStorage.getItem("game_username");
 
-      if (!storedId || !storedName) {
-        console.log("No session found, redirecting to login...");
-        router.push("/");
-        return;
-      }
-      
-      setPlayerId(storedId);
-      setUsername(storedName);
-      loadDashboardData(storedId);
-    }, 100);
+    if (!storedId || !storedName) {
+      console.log("No session found, redirecting to login...");
+      router.push("/");
+      return;
+    }
+    
+    setPlayerId(storedId);
+    setUsername(storedName);
+    loadDashboardData(storedId);
+  }, [router]);
 
-    return () => clearTimeout(checkSession);
-  }, []);
-
-  // ระบบ Polling อัปเดตสถานะด่านจากแอดมินทุก 4 วินาที (รันหลังจากรู้ playerId แล้ว)
+  // ระบบ Polling อัปเดตสถานะด่านจากแอดมินทุก 4 วินาที
   useEffect(() => {
     if (!playerId) return;
     const interval = setInterval(() => {
