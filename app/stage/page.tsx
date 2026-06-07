@@ -24,7 +24,6 @@ export default function StageSelectionPage() {
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
   const [isLoading, setIsLoading] = useState(true);
 
-  // ⚡ ดึงข้อมูลจากดีบีแยกออกมาให้รับค่าตรงๆ ไม่พึ่งพาสเตทตัวแปรที่อาจจะยังตั้งค่าไม่ทัน
   const loadDashboardData = async (userId: string) => {
     if (!userId) return;
     try {
@@ -59,29 +58,34 @@ export default function StageSelectionPage() {
     }
   };
 
-  // ⚡ ปรับปรุงจุดตรวจเช็ค Session: เช็คครั้งเดียวตอน Mount หน้าจอ
   useEffect(() => {
-    const storedId = localStorage.getItem("game_player_id");
-    const storedName = localStorage.getItem("game_username");
+    // ⚡ หน่วงเวลาเล็กน้อย (100ms) เพื่อรอให้ Browser อัปเดต LocalStorage จากหน้า Login ให้เสร็จชัวร์ๆ ก่อนเช็ค
+    const checkSession = setTimeout(() => {
+      const storedId = localStorage.getItem("game_player_id");
+      const storedName = localStorage.getItem("game_username");
 
-    if (!storedId || !storedName) {
-      router.push("/");
-      return;
-    }
-    
-    setPlayerId(storedId);
-    setUsername(storedName);
-
-    // สั่งโหลดข้อมูลครั้งแรกทันทีด้วยไอดีที่แกะได้
-    loadDashboardData(storedId);
-
-    // ทำ Realtime Polling อัปเดตข้อมูลจากแอดมินทุก 4 วินาทีอย่างปลอดภัย
-    const interval = setInterval(() => {
+      if (!storedId || !storedName) {
+        console.log("No session found, redirecting to login...");
+        router.push("/");
+        return;
+      }
+      
+      setPlayerId(storedId);
+      setUsername(storedName);
       loadDashboardData(storedId);
-    }, 4000);
+    }, 100);
 
+    return () => clearTimeout(checkSession);
+  }, []);
+
+  // ระบบ Polling อัปเดตสถานะด่านจากแอดมินทุก 4 วินาที (รันหลังจากรู้ playerId แล้ว)
+  useEffect(() => {
+    if (!playerId) return;
+    const interval = setInterval(() => {
+      loadDashboardData(playerId);
+    }, 4000);
     return () => clearInterval(interval);
-  }, []); // 🔒 เปลี่ยนดักวงเล็บว่างเพื่อไม่ให้ Re-run ลูปอย่างไร้สาเหตุ
+  }, [playerId]);
 
   // นาฬิกานับถอยหลัง
   useEffect(() => {
@@ -91,65 +95,33 @@ export default function StageSelectionPage() {
     return () => clearInterval(timer);
   }, []);
 
-  const getStageTargetUnlockTime = (stageNum: number, globalUnlockTime?: Date): Date | null => {
-    return globalUnlockTime || null;
-  };
-
   const getCountdownString = (targetTime: Date) => {
     const diffMs = targetTime.getTime() - currentTime.getTime();
     if (diffMs <= 0) return "UNLOCKED";
-
     const totalSeconds = Math.floor(diffMs / 1000);
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
-
     return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
   };
 
   const getStageStatus = (stageNum: number, targetTime: Date | null, isStageActive: boolean) => {
-    if (isGameCompleted || currentStage > stageNum) {
-      return "COMPLETED";
-    }
-    
-    if (!isStageActive) {
-      return "LOCKED_ADMIN"; 
-    }
-
-    if (currentStage < stageNum) {
-      return "LOCKED_PREVIOUS"; 
-    }
-
-    if (targetTime && currentTime < targetTime) {
-      return "LOCKED_TIME"; 
-    }
-
+    if (isGameCompleted || currentStage > stageNum) return "COMPLETED";
+    if (!isStageActive) return "LOCKED_ADMIN"; 
+    if (currentStage < stageNum) return "LOCKED_PREVIOUS"; 
+    if (targetTime && currentTime < targetTime) return "LOCKED_TIME"; 
     return "ACTIVE"; 
   };
 
   const STAGES = [
-    {
-      id: 1,
-      title: "STAGE 01: STRING_CONCAT",
-      desc: "กู้คืนชิ้นส่วนไฟล์ ID ระบบเมนเฟรมที่กระจัดกระจายด้วยลอจิก Python",
-    },
-    {
-      id: 2,
-      title: "STAGE 02: ARRAY_INDEXING",
-      desc: "แกะรอยตำแหน่งพิกัดอาร์เรย์เพื่อประกอบคำศัพท์สำคัญประจำแผนก",
-    },
-    {
-      id: 3,
-      title: "STAGE 03: BINARY_PARSING",
-      desc: "ถอดรหัสแพ็กเก็ตเลขฐานสองเพื่อเผยชื่อโค้ดเนมที่แท้จริงของพี่รหัส",
-    },
+    { id: 1, title: "STAGE 01: STRING_CONCAT", desc: "กู้คืนชิ้นส่วนไฟล์ ID ระบบเมนเฟรมที่กระจัดกระจายด้วยลอจิก Python" },
+    { id: 2, title: "STAGE 02: ARRAY_INDEXING", desc: "แกะรอยตำแหน่งพิกัดอาร์เรย์เพื่อประกอบคำศัพท์สำคัญประจำแผนก" },
+    { id: 3, title: "STAGE 03: BINARY_PARSING", desc: "ถอดรหัสแพ็กเก็ตเลขฐานสองเพื่อเผยชื่อโค้ดเนมที่แท้จริงของพี่รหัส" },
   ];
 
   if (isLoading) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center bg-black font-mono text-[#2CFFB5]">
-        <div className="text-sm tracking-widest animate-pulse">
-          INITIALIZING SECURE CHANNELS...
-        </div>
+        <div className="text-sm tracking-widest animate-pulse">INITIALIZING SECURE CHANNELS...</div>
       </main>
     );
   }
@@ -158,12 +130,8 @@ export default function StageSelectionPage() {
     <main className="flex min-h-screen flex-col bg-black text-[#2CFFB5] font-mono p-8 selection:bg-[#2CFFB5] selection:text-black">
       <div className="flex justify-between items-center border-b border-neutral-800 pb-6 mb-10">
         <div>
-          <h1 className="text-xl font-bold tracking-widest text-white uppercase">
-            MISSION<span className="text-[#2CFFB5] animate-pulse">_</span>
-          </h1>
-          <p className="text-[10px] text-neutral-500 mt-1 uppercase">
-            OPERATOR: {username} | STATUS: CONNECTED
-          </p>
+          <h1 className="text-xl font-bold tracking-widest text-white uppercase">MISSION<span className="text-[#2CFFB5] animate-pulse">_</span></h1>
+          <p className="text-[10px] text-neutral-500 mt-1 uppercase">OPERATOR: {username} | STATUS: CONNECTED</p>
         </div>
         <button
           onClick={() => {
@@ -185,7 +153,7 @@ export default function StageSelectionPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {STAGES.map((stage) => {
             const config = stageConfigs.find((c) => c.level_id === stage.id);
-            const targetTime = getStageTargetUnlockTime(stage.id, config?.unlock_time);
+            const targetTime = config?.unlock_time || null;
             const isStageActive = config ? config.is_active : true;
             const status = getStageStatus(stage.id, targetTime, isStageActive);
 
@@ -214,26 +182,20 @@ export default function StageSelectionPage() {
                     <h3 className={`text-sm font-bold tracking-wider ${status === "ACTIVE" ? "text-white" : "text-neutral-300"}`}>
                       {stage.title}
                     </h3>
-                    <p className="text-[11px] text-neutral-500 mt-2 leading-relaxed">
-                      {stage.desc}
-                    </p>
+                    <p className="text-[11px] text-neutral-500 mt-2 leading-relaxed">{stage.desc}</p>
                   </div>
                 </div>
 
                 <div className="mt-6 border-t border-neutral-900/50 pt-4">
                   {status === "LOCKED_ADMIN" && (
                     <div className="text-center py-4">
-                      <div className="text-[10px] text-red-500 uppercase tracking-widest animate-pulse font-bold">
-                        ปิดระบบชั่วคราวโดยแอดมิน
-                      </div>
+                      <div className="text-[10px] text-red-500 uppercase tracking-widest animate-pulse font-bold">ปิดระบบชั่วคราวโดยแอดมิน</div>
                     </div>
                   )}
 
                   {status === "LOCKED_TIME" && (
                     <div className="text-center">
-                      <div className="text-[10px] text-neutral-500 uppercase tracking-widest">
-                        ปลดล็อกในอีก
-                      </div>
+                      <div className="text-[10px] text-neutral-500 uppercase tracking-widest">ปลดล็อกในอีก</div>
                       <div className="text-xl font-black text-red-500 tracking-wider py-1 animate-pulse">
                         {targetTime ? getCountdownString(targetTime) : "OFFLINE"}
                       </div>
@@ -241,15 +203,13 @@ export default function StageSelectionPage() {
                   )}
 
                   {status === "LOCKED_PREVIOUS" && (
-                    <div className="text-center py-4 text-[10px] text-neutral-600 uppercase">
-                      ต้องทำด่านก่อนหน้าให้สำเร็จ
-                    </div>
+                    <div className="text-center py-4 text-[10px] text-neutral-600 uppercase">ต้องทำด่านก่อนหน้าให้สำเร็จ</div>
                   )}
 
                   {status === "COMPLETED" && (
                     <button
                       onClick={() => router.push(`/stage/${stage.id}`)}
-                      className="w-full text-center py-2.5 rounded text-[10px] border border-emerald-500/30 text-emerald-500 hover:bg-emerald-500 hover:text-black transition-all uppercase tracking-widest font-bold"
+                      className="w-full text-center py-2.5 rounded text-[10px] border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500 hover:text-black transition-all uppercase tracking-widest font-bold"
                     >
                       ENTER PROTOCOL (REVIEW)
                     </button>
@@ -269,10 +229,7 @@ export default function StageSelectionPage() {
           })}
         </div>
       </div>
-
-      <footer className="text-center text-[9px] text-neutral-700 mt-12">
-        School of Information and Communication Technology, University of Phayao
-      </footer>
+      <footer className="text-center text-[9px] text-neutral-700 mt-12">School of Information and Communication Technology, University of Phayao</footer>
     </main>
   );
 }
