@@ -24,16 +24,14 @@ export default function StageSelectionPage() {
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
   const [isLoading, setIsLoading] = useState(true);
 
-  // ดึงข้อมูลการตั้งค่าและล็อกเวลาจากแอดมิน
-  const loadDashboardData = async () => {
+  // ⚡ ดึงข้อมูลจากดีบีแยกออกมาให้รับค่าตรงๆ ไม่พึ่งพาสเตทตัวแปรที่อาจจะยังตั้งค่าไม่ทัน
+  const loadDashboardData = async (userId: string) => {
+    if (!userId) return;
     try {
-      const storedId = localStorage.getItem("game_player_id");
-      if (!storedId) return;
-
       const { data: progress } = await supabase
         .from("player_progress")
         .select("current_stage, is_completed")
-        .eq("player_id", storedId)
+        .eq("player_id", userId)
         .maybeSingle();
 
       if (progress) {
@@ -41,7 +39,6 @@ export default function StageSelectionPage() {
         setIsGameCompleted(progress.is_completed);
       }
 
-      // ดึงสถานะ is_active จากฐานข้อมูลเพื่อให้ลิ้งก์กับหน้า Admin
       const { data: configs } = await supabase
         .from("game_config")
         .select("level_id, unlock_time, is_active")
@@ -51,7 +48,7 @@ export default function StageSelectionPage() {
         const formattedConfigs = configs.map((c) => ({
           level_id: Number(c.level_id),
           unlock_time: new Date(c.unlock_time),
-          is_active: c.is_active !== false // แปลงให้ปลอดภัยกรณี null
+          is_active: c.is_active !== false
         }));
         setStageConfigs(formattedConfigs);
       }
@@ -62,6 +59,7 @@ export default function StageSelectionPage() {
     }
   };
 
+  // ⚡ ปรับปรุงจุดตรวจเช็ค Session: เช็คครั้งเดียวตอน Mount หน้าจอ
   useEffect(() => {
     const storedId = localStorage.getItem("game_player_id");
     const storedName = localStorage.getItem("game_username");
@@ -70,15 +68,22 @@ export default function StageSelectionPage() {
       router.push("/");
       return;
     }
+    
     setPlayerId(storedId);
     setUsername(storedName);
 
-    loadDashboardData();
-    // ระบบ Realtime Polling สแกนหาคำสั่งจากแอดมินทุกๆ 4 วินาที
-    const interval = setInterval(loadDashboardData, 4000);
-    return () => clearInterval(interval);
-  }, [router]);
+    // สั่งโหลดข้อมูลครั้งแรกทันทีด้วยไอดีที่แกะได้
+    loadDashboardData(storedId);
 
+    // ทำ Realtime Polling อัปเดตข้อมูลจากแอดมินทุก 4 วินาทีอย่างปลอดภัย
+    const interval = setInterval(() => {
+      loadDashboardData(storedId);
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, []); // 🔒 เปลี่ยนดักวงเล็บว่างเพื่อไม่ให้ Re-run ลูปอย่างไร้สาเหตุ
+
+  // นาฬิกานับถอยหลัง
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
@@ -87,8 +92,7 @@ export default function StageSelectionPage() {
   }, []);
 
   const getStageTargetUnlockTime = (stageNum: number, globalUnlockTime?: Date): Date | null => {
-    let targetTime: Date | null = globalUnlockTime || null;
-    return targetTime;
+    return globalUnlockTime || null;
   };
 
   const getCountdownString = (targetTime: Date) => {
@@ -107,17 +111,14 @@ export default function StageSelectionPage() {
       return "COMPLETED";
     }
     
-    // ถ้าแอดมินสับสวิตช์ปิดด่าน (is_active = false) ให้ล็อกทันที
     if (!isStageActive) {
       return "LOCKED_ADMIN"; 
     }
 
-    // ถ้ายังไม่ผ่านด่านก่อนหน้า ให้ล็อกไว้
     if (currentStage < stageNum) {
       return "LOCKED_PREVIOUS"; 
     }
 
-    // ถ้าแอดมินตั้งเวลาล็อกในอนาคต ให้ล็อกและแสดงเวลานับถอยหลัง
     if (targetTime && currentTime < targetTime) {
       return "LOCKED_TIME"; 
     }
