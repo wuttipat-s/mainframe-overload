@@ -22,7 +22,7 @@ const STAGE_MISSIONS: Record<string, Mission> = {
   },
   "2": {
     title: "STAGE_02: ถอดสมการดัชนีวงกต (The Hidden Pointer Offset)",
-    story: "ภารกิจ: การตามล่าหาตัวตนแอดมินเริ่มลึกลับขึ้น! คราวนี้ระบบกล้องวงจรปิดต้องการพิกัดดัชนี (Index Pointer) จำนวน 5 หลักเพื่อไปสุ่มเจาะดึงลักษณะรูปโปรไฟล์ของแอดมินออกจากคลังข้อมูล\n\nแต่แอดมินดันซ่อนเลขดัชนีทั้ง 5 ตัวเอาไว้ในรูปของสมการตรรกศาสตร์! น้องๆ ต้องคำนวณหาผลลัพธ์ของ `[Key_A, Key_B, Key_C, Key_D, Key_E]` ออกมาก่อน แล้วจึงนำตัวเลขเหล่านั้นไปนับช่องดึงคำตอบจากกล่องสุ่มทั้ง 5 กล่องตามลำดับ\n\n📊 [สมการถอดรหัสพิกัดลับ]:\n• Key_A = len(\"iPhone\") - 1\n• Key_B = 16 // 4\n• Key_C = int(\"100\", 2)  *(คำนวณเลขฐานสองให้เป็นฐานสิบ)*\n• Key_D = 25 // 5\n• Key_E = 0b100          *(ค่าของตัวแปรประเภท Binary Literals)*\n\n📦 [กล่องสุ่มคลังคำศัพท์]:\n• กล่องที่ 1: [\"คอร์ส\", \"เกรด\", \"อาจารย์\", \"วิชา\", \"การบ้าน\", \"โปร\"]\n• กล่องที่ 2: [\"เซิร์ฟ\", \"ระบบ\", \"ดาต้า\", \"คลาวด์\", \"ไฟล์\"]\n• กล่องที่ 3: [\"แว่น\", \"หมวก\", \"กางเกง\", \"เข็มขัด\", \"เสื้อ\"]\n• กล่องที่ 4: [\"ลาย\", \"ขนาด\", \"ยี่ห้อ\", \"ประเภท\", \"เนื้อผ้า\", \"สี\"]\n• กล่องที่ 5: [\"ขาว\", \"เทา\", \"น้ำเงิน\", \"เขียว\", \"ดำ\"]",
+    story: "ภารกิจ: การตามล่าหาตัวตนแอดมินเริ่มลึกลับขึ้น! คราวนี้ระบบกล้องวงจรปิดต้องการพิกัดดัชนี (Index Pointer) จำนวน 5 หลักเพื่อไปสุ่มเจาะดึงลักษณะรูปโปรไฟล์ของแอดมินออกจากคลังข้อมูล\n\nแต่แอดมินดันซ่อนเลขดัชนีทั้ง 5 ตัวเอาไว้ในรูปของสมการตรรกศาสตร์! น้องๆ ต้องคำนวณหาผลลัพธ์ของ `[Key_A, Key_B, Key_C, Key_D, Key_E]` ออกมาก่อน แล้วจึงนำตัวเลขเหล่านั้นไปนับช่องดึงคำตอบจากกล่องสุ่มทั้ง 5 กล่องตามลำดับ\n\n📊 [สมการถอดรหัสพิกัดลับ]:\n• Key_A = len(\"iPhone\") - 1\n• Key_B = 16 // 4\n• Key_C = int(\"100\", 2)  *(คำนวณเลขฐานสองให้เป็นฐานสิบ)*\n• Key_D = 25 // 5\n• Key_E = 0b100         *(ค่าของตัวแปรประเภท Binary Literals)*\n\n📦 [กล่องสุ่มคลังคำศัพท์]:\n• กล่องที่ 1: [\"คอร์ส\", \"เกรด\", \"อาจารย์\", \"วิชา\", \"การบ้าน\", \"โปร\"]\n• กล่องที่ 2: [\"เซิร์ฟ\", \"ระบบ\", \"ดาต้า\", \"คลาวด์\", \"ไฟล์\"]\n• กล่องที่ 3: [\"แว่น\", \"หมวก\", \"กางเกง\", \"เข็มขัด\", \"เสื้อ\"]\n• กล่องที่ 4: [\"ลาย\", \"ขนาด\", \"ยี่ห้อ\", \"ประเภท\", \"เนื้อผ้า\", \"สี\"]\n• กล่องที่ 5: [\"ขาว\", \"เทา\", \"น้ำเงิน\", \"เขียว\", \"ดำ\"]",
     hint: "คำใบ้จากระบบ: ถอดสมการทั้ง 5 ข้อให้ได้ตัวเลขออกมาก่อน (ย้ำว่าเริ่มนับคำแรกในกล่องสุ่มจากดัชนีเลข 0) แล้วเอาคำศัพท์ภาษาไทยที่ได้จากทั้ง 5 กล่องมาเชื่อมต่อกันแบบไม่มีเว้นวรรค!",
     label: "ENTER IDENTITY CLUE (ลักษณะโปรไฟล์แอดมินที่ถอดรหัสสมบูรณ์)",
     placeholder: "กรอกลักษณะโปรไฟล์ภาษาไทย..."
@@ -36,6 +36,13 @@ const STAGE_MISSIONS: Record<string, Mission> = {
   }
 };
 
+// 💬 คลังข้อความปั่นๆ จากพี่รหัส
+const MOTIVATION_MSGS: Record<string, string> = {
+  "1": "รู้ยัง รู้ยัง ถ้าไม่รู้ก็หยุดตามหาพี่ได้เลย",
+  "2": "พี่ไม่ใช่คนเก่าที่เราตามหา เพราฉะนั่นหยุดตามหาพี่",
+  "3": "รู้ได้ไงว่าเป็นพี่ อาจจะไม่ใช่ก็ได้นะ (พี่ไม่มีเงินนนน)"
+};
+
 export default function StagePage() {
   const router = useRouter();
   const rawParams = useParams();
@@ -45,6 +52,7 @@ export default function StagePage() {
   const [playerId, setPlayerId] = useState("");
   const [userAnswer, setUserAnswer] = useState("");
   const [statusMsg, setStatusMsg] = useState("");
+  const [motivationMsg, setMotivationMsg] = useState(""); // ⚡ State สำหรับโชว์ข้อความให้กำลังใจ
   const [isLoading, setIsLoading] = useState(false);
   const [dbCorrectAnswer, setDbCorrectAnswer] = useState("");
 
@@ -82,6 +90,7 @@ export default function StagePage() {
         if (alreadyCleared) {
           setUserAnswer(config.secret_answer || "");
           setStatusMsg("✅ REVIEW MODE: คุณได้ทำการถอดรหัสด่านนี้สำเร็จไปแล้ว");
+          setMotivationMsg(MOTIVATION_MSGS[stageId] || ""); // ⚡ โชว์ข้อความปั่นทิ้งไว้ตอนกลับมาดูโหมด Review ด้วย
         }
 
         const isStageActive = config.is_active !== false;
@@ -166,12 +175,16 @@ export default function StagePage() {
 
     setIsLoading(true);
     setStatusMsg("");
+    setMotivationMsg("");
 
     const formattedUserAns = userAnswer.trim().replace(/\s+/g, ""); 
     const formattedCorrectAns = dbCorrectAnswer.trim().replace(/\s+/g, ""); 
 
     if (formattedUserAns.toLowerCase() === formattedCorrectAns.toLowerCase()) {
       setStatusMsg("⚡ ACCESS GRANTED: คำตอบถูกต้อง! กำลังบันทึกข้อมูลเข้าระบบ...");
+      
+      // ⚡ โชว์ข้อความให้กำลังใจน้องๆ!
+      setMotivationMsg(MOTIVATION_MSGS[stageId] || "");
 
       try {
         const nextStageNum = parseInt(stageId) + 1;
@@ -190,9 +203,10 @@ export default function StagePage() {
 
         localStorage.setItem(`ans_${playerId}_stage_${stageId}`, userAnswer);
 
+        // ⚡ เพิ่มเวลาดีเลย์เป็น 4 วินาที ให้น้องมีเวลาอ่านข้อความให้เจ็บใจเล่นก่อนโดนเด้งกลับหน้าเลือกด่าน
         setTimeout(() => {
           router.push(`/stage`);
-        }, 1500);
+        }, 4000);
 
       } catch (err: any) {
         setStatusMsg(`DATABASE ERROR: ${err.message}`);
@@ -211,7 +225,6 @@ export default function StagePage() {
         <div>
           <span className="text-white font-bold">OPERATOR_ID:</span> <span className="text-[#2CFFB5] font-bold">{username || "FETCHING..."}</span>
         </div>
-        {/* 🔥 แก้ไขปุ่มขวาบนตรงนี้: เปลี่ยนจากปุ่ม LOGOUT เป็นปุ่มกลับสู่หน้าหลัก / Mission Hub */}
         <button
           onClick={() => router.push("/stage")}
           className="text-xs border border-neutral-800 text-neutral-400 px-3 py-1 rounded hover:border-[#2CFFB5] hover:text-white transition-colors"
@@ -282,6 +295,14 @@ export default function StagePage() {
                     : "bg-red-500/5 border-red-500/30 text-red-400"
                 }`}>
                   {statusMsg}
+                </div>
+              )}
+
+              {/* ⚡ กล่องข้อความจากพี่รหัส (จะเด้งขึ้นมาเด่นๆ ตอนน้องตอบถูก) */}
+              {motivationMsg && (
+                <div className="mt-4 p-5 border-2 border-dashed border-[#2CFFB5] bg-[#2CFFB5]/10 rounded-lg text-center shadow-[0_0_20px_rgba(44,255,181,0.2)] animate-pulse">
+                  <div className="text-[10px] text-neutral-400 mb-2 uppercase tracking-widest">INCOMING MESSAGE FROM ADMIN</div>
+                  <p className="text-[#2CFFB5] text-lg font-bold tracking-wider">{motivationMsg}</p>
                 </div>
               )}
             </form>
