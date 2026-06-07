@@ -92,7 +92,7 @@ export default function LoginPage() {
           {/* 🔥 ส่วนโลโก้ที่แก้ไขใหม่ */}
           <div className="mb-4">
             <img 
-              src="https://i.pinimg.com/736x/c6/3e/ff/c63eff0e495209f8721c43553229b466.jpg" 
+              src="/public/Chomiczek❤️❤️.jpg" // ⚡ เปลี่ยนมาเรียกรูปจากโฟลเดอร์ public ในเครื่องเราเอง
               alt="Logo" 
               className="w-24 h-24 mx-auto rounded-full object-cover border-2 border-[#2CFFB5] shadow-[0_0_15px_rgba(44,255,181,0.5)]"
             />
