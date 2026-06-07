@@ -21,7 +21,7 @@ export default function LoginPage() {
     setIsLoading(true);
     setErrorMsg("");
 
-    // 🔥 บรรทัดป้องกันบั๊ก: ล้างค่าความจำค้างทั้งหมด (เช่น MXMO ที่เคยค้างอยู่) ก่อนเริ่มชงเซสชันใหม่
+    // 🔥 ล้างค่าความจำค้างทั้งหมดก่อนเริ่มชงเซสชันใหม่
     localStorage.clear();
 
     try {
@@ -29,23 +29,49 @@ export default function LoginPage() {
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
-        .eq("username", username.trim()) // ใช้ .trim() ป้องกันการก๊อปปี้เว้นวรรคเกินมา
+        .eq("username", username.trim()) 
         .eq("password", password.trim())
         .maybeSingle();
 
       if (error) throw error;
 
       if (data) {
-        // 2. บันทึกข้อมูลใหม่เอี่ยมลงเครื่องผู้ใช้ (LocalStorage)
+        // 2. บันทึกข้อมูลเซสชันลงเครื่องผู้ใช้ (LocalStorage)
         localStorage.setItem("game_player_id", data.id);
         localStorage.setItem("game_username", data.username);
         localStorage.setItem("game_role", data.role);
 
-        // 3. แยกเส้นทาง (แอดมินไปหน้าควบคุม, ผู้เล่นไปหน้า MISSION_HUB)
+        // 3. แยกเส้นทางตามบทบาทระบบ
         if (data.role === "admin") {
           router.push("/admin/dashboard");
         } else {
-          router.push("/stage"); // วิ่งตรงเข้าสู่หน้าหลักของเกมทันทีด้วยชื่อผู้เล่นใหม่
+          
+          // ⚡ [ZONING FIX]: ตรวจสอบว่ามีข้อมูลความคืบหน้าของไอดีนี้ในฐานข้อมูลหรือยัง?
+          const { data: checkProgress, error: progressError } = await supabase
+            .from("player_progress")
+            .select("player_id")
+            .eq("player_id", data.id)
+            .maybeSingle();
+
+          if (progressError) throw progressError;
+
+          // 🚨 ถ้าในตารางไม่มีข้อมูล (เป็น null) ให้ทำระบบ Auto-Generation สร้างให้อัตโนมัติทันที
+          if (!checkProgress) {
+            const { error: insertError } = await supabase
+              .from("player_progress")
+              .insert([
+                {
+                  player_id: data.id,
+                  current_stage: 1,       // เริ่มต้นที่ด่าน 1
+                  is_completed: false,    // ยังเล่นไม่จบเกม
+                },
+              ]);
+            
+            if (insertError) throw insertError;
+          }
+
+          // เมื่อเตรียมข้อมูลผู้เล่นในฐานข้อมูลสมบูรณ์แล้ว มั่นใจได้ว่าไม่มีทางโดนดีดกลับ วิ่งเข้าหน้าหลักเกมเลยครับ!
+          router.push("/stage"); 
         }
       } else {
         setErrorMsg("ACCESS DENIED: ตรวจสอบ AGENT LOG และ AUTH_KEY อีกครั้ง");
