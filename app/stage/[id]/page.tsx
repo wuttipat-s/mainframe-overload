@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { supabase } from "@/lib/supabase"; // ดึงตัวเชื่อมต่อมาตรฐานกลาง
+import { supabase } from "@/lib/supabase";
 
 interface Mission {
   title: string;
@@ -39,8 +39,6 @@ const STAGE_MISSIONS: Record<string, Mission> = {
 export default function StagePage() {
   const router = useRouter();
   const rawParams = useParams();
-  
-  // ใช้ useParams() ดึงค่าโดยตรงและแปลงเป็นข้อความ ปลอดภัยจากปัญหา Promise บน Next.js 15
   const stageId = (rawParams?.id as string) || "1";
 
   const [username, setUsername] = useState("");
@@ -54,12 +52,10 @@ export default function StagePage() {
   const [cooldownLeft, setCooldownLeft] = useState(0);
   const [isCleared, setIsCleared] = useState(false);
 
-  // ตรวจสอบความคืบหน้าของผู้เล่นและสถานะล็อกด่าน
   const checkAccessAndLockState = async (currentPlayerId: string) => {
     if (!currentPlayerId || !stageId) return;
 
     try {
-      // 1. ตรวจสอบความคืบหน้าของผู้เล่นปัจจุบัน
       const { data: progress } = await supabase
         .from("player_progress")
         .select("current_stage, is_completed")
@@ -74,7 +70,6 @@ export default function StagePage() {
         }
       }
 
-      // 2. ดึงการตั้งค่าล็อก/เฉลยด่านจากฐานข้อมูลแอดมิน
       const { data: config } = await supabase
         .from("game_config")
         .select("unlock_time, is_active, secret_answer")
@@ -126,7 +121,6 @@ export default function StagePage() {
 
     checkAccessAndLockState(storedId);
     
-    // ตั้งตรวจสอบสถานะล็อกด่านแบบเรียลไทม์ทุกๆ 3 วินาที
     const interval = setInterval(() => checkAccessAndLockState(storedId), 3000);
     return () => clearInterval(interval);
   }, [stageId, router]);
@@ -141,17 +135,16 @@ export default function StagePage() {
 
   const currentMission = STAGE_MISSIONS[stageId];
 
-  // กรณีผ่านครบถ้วนทุกด่าน
   if (!currentMission) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center bg-black font-mono p-6 text-[#2CFFB5]">
         <div className="border border-[#2CFFB5]/30 bg-[#050505] rounded-lg p-8 text-center max-w-md space-y-4">
           <h1 className="text-2xl font-bold tracking-widest text-white animate-pulse">🎉 MISSION ACCOMPLISHED</h1>
           <p className="text-neutral-400 text-sm leading-relaxed">
-            ยินดีด้วย! ทีมของคุณได้ทำการกู้คืนระบบ Mainframe และเจาะข้อมูลรหัสผ่านสำเร็จครบถ้วนทุก sub-routine เรียบร้อยแล้ว!
+            ยินดีด้วย! ทีมของคุณได้ทำการกู้คืนระบบ Mainframe และเจาะข้อมูลรหัสผ่านสำเร็จครบถ้วนทุกด่านเรียบร้อยแล้ว!
           </p>
           <div className="text-xs text-[#2CFFB5] border border-neutral-900 rounded p-3 bg-black uppercase font-bold text-center">
-            Final Target Cracked: CODE_NAME "MXMO"
+            SYSTEM STATUS: ALL OPERATIONAL BY {username}
           </div>
           <button 
             onClick={() => { 
@@ -184,7 +177,6 @@ export default function StagePage() {
         const nextStageNum = parseInt(stageId) + 1;
         const isGameFinished = nextStageNum > 3;
 
-        // บันทึกความก้าวหน้าลงใน Supabase
         const { error } = await supabase
           .from("player_progress")
           .upsert({
@@ -220,10 +212,13 @@ export default function StagePage() {
           <span className="text-white font-bold">OPERATOR_ID:</span> <span className="text-[#2CFFB5] font-bold">{username || "FETCHING..."}</span>
         </div>
         <button
-          onClick={() => router.push("/stage")}
-          className="text-xs border border-neutral-800 text-neutral-400 px-3 py-1 rounded hover:border-[#2CFFB5] hover:text-white transition-colors"
+          onClick={() => {
+            localStorage.clear();
+            router.push("/");
+          }}
+          className="text-xs border border-red-500 text-red-500 px-3 py-1 rounded hover:bg-red-500 hover:text-black transition-all"
         >
-          RETURN TO MISSION_HUB
+          LOGOUT
         </button>
       </div>
 
@@ -234,14 +229,11 @@ export default function StagePage() {
               ⚠️ SYSTEM LOCKED BY ADMIN ⚠️
             </h2>
             <p className="text-neutral-400 text-xs leading-relaxed max-w-md mx-auto">
-              ระบบป้องกันตัวเองของ Mainframe ทำงาน! ด่านนี้ถูกระงับการเข้าถึงชั่วคราว หรือยังไม่ถึงเวลาเปิดตามที่ศูนย์บัญชาการกำหนด
+              ระบบป้องกันตัวเองของ Mainframe ทำงาน! ด่านนี้ถูกระงับการเข้าถึงชั่วคราว
             </p>
             <div className="text-6xl font-black text-red-500 font-mono tracking-wider py-2">
               {cooldownLeft === 999999 ? "OFFLINE" : `${Math.floor(cooldownLeft / 60)}:${(cooldownLeft % 60).toString().padStart(2, "0")}`}
             </div>
-            <p className="text-[10px] text-neutral-600 uppercase tracking-widest">
-              โปรดรอการอนุมัติปลดล็อกด่านจากศูนย์ควบคุม (Admin)
-            </p>
           </div>
         ) : (
           <div className="space-y-6">
@@ -300,7 +292,7 @@ export default function StagePage() {
       </div>
 
       <footer className="text-center text-[9px] text-neutral-700 mt-6">
-        TERMINAL OVERLOAD INTERFACE v2.2.1 - PERSISTENT STATE ENABLED
+        TERMINAL OVERLOAD INTERFACE v2.2.2 - REFRESHED ACTIVE SESSION
       </footer>
     </main>
   );

@@ -21,19 +21,22 @@ export default function LoginPage() {
     setIsLoading(true);
     setErrorMsg("");
 
+    // 🔥 บรรทัดป้องกันบั๊ก: ล้างค่าความจำค้างทั้งหมด (เช่น MXMO ที่เคยค้างอยู่) ก่อนเริ่มชงเซสชันใหม่
+    localStorage.clear();
+
     try {
       // 1. ค้นหาผู้ใช้จากตาราง profiles
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
-        .eq("username", username)
-        .eq("password", password)
+        .eq("username", username.trim()) // ใช้ .trim() ป้องกันการก๊อปปี้เว้นวรรคเกินมา
+        .eq("password", password.trim())
         .maybeSingle();
 
       if (error) throw error;
 
       if (data) {
-        // 2. บันทึกข้อมูลลงเครื่องผู้ใช้ (LocalStorage)
+        // 2. บันทึกข้อมูลใหม่เอี่ยมลงเครื่องผู้ใช้ (LocalStorage)
         localStorage.setItem("game_player_id", data.id);
         localStorage.setItem("game_username", data.username);
         localStorage.setItem("game_role", data.role);
@@ -42,7 +45,7 @@ export default function LoginPage() {
         if (data.role === "admin") {
           router.push("/admin/dashboard");
         } else {
-          router.push("/stage"); // วิ่งตรงเข้าสู่หน้า MISSION_HUB ทันที (ภาพที่ 2)
+          router.push("/stage"); // วิ่งตรงเข้าสู่หน้าหลักของเกมทันทีด้วยชื่อผู้เล่นใหม่
         }
       } else {
         setErrorMsg("ACCESS DENIED: ตรวจสอบ AGENT LOG และ AUTH_KEY อีกครั้ง");
@@ -81,7 +84,7 @@ export default function LoginPage() {
         <form onSubmit={handleLogin} className="space-y-6 pt-4">
           <div className="space-y-2">
             <label className="text-[10px] uppercase text-neutral-400 tracking-wider">
-              Username (Username คือ TEAM_01)
+              Username
             </label>
             <input
               type="text"
@@ -95,7 +98,7 @@ export default function LoginPage() {
 
           <div className="space-y-2">
             <label className="text-[10px] uppercase text-neutral-400 tracking-wider">
-              Password (Password คือ 123456)
+              Password
             </label>
             <input
               type="password"
