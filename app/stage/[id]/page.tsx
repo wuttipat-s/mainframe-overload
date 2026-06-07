@@ -211,14 +211,12 @@ export default function StagePage() {
         <div>
           <span className="text-white font-bold">OPERATOR_ID:</span> <span className="text-[#2CFFB5] font-bold">{username || "FETCHING..."}</span>
         </div>
+        {/* 🔥 แก้ไขปุ่มขวาบนตรงนี้: เปลี่ยนจากปุ่ม LOGOUT เป็นปุ่มกลับสู่หน้าหลัก / Mission Hub */}
         <button
-          onClick={() => {
-            localStorage.clear();
-            router.push("/");
-          }}
-          className="text-xs border border-red-500 text-red-500 px-3 py-1 rounded hover:bg-red-500 hover:text-black transition-all"
+          onClick={() => router.push("/stage")}
+          className="text-xs border border-neutral-800 text-neutral-400 px-3 py-1 rounded hover:border-[#2CFFB5] hover:text-white transition-colors"
         >
-          LOGOUT
+          RETURN TO MISSION_HUB
         </button>
       </div>
 
@@ -292,7 +290,7 @@ export default function StagePage() {
       </div>
 
       <footer className="text-center text-[9px] text-neutral-700 mt-6">
-        TERMINAL OVERLOAD INTERFACE v2.2.2 - REFRESHED ACTIVE SESSION
+        TERMINAL OVERLOAD INTERFACE v2.2.3 - NAVIGATION PATTERN FIXED
       </footer>
     </main>
   );
