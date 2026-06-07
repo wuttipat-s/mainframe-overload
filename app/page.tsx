@@ -89,11 +89,15 @@ export default function LoginPage() {
       <div className="z-10 w-full max-w-md space-y-8 border border-neutral-800 bg-black/80 backdrop-blur-md p-10 rounded-xl shadow-[0_0_40px_rgba(44,255,181,0.05)]">
         
         <div className="text-center space-y-2 border-b border-neutral-900 pb-6">
-          <div className="text-[#2CFFB5] text-4xl mb-4">
-            <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="square" strokeLinejoin="miter" strokeWidth="1.5" d="M12 11c0 3.532-2.122 6.55-5 7.822a10.057 10.057 0 010-15.644C9.878 4.45 12 7.468 12 11zM21 11c0 3.532-2.122 6.55-5 7.822a10.057 10.057 0 010-15.644C18.878 4.45 21 7.468 21 11z"></path>
-            </svg>
+          {/* 🔥 ส่วนโลโก้ที่แก้ไขใหม่ */}
+          <div className="mb-4">
+            <img 
+              src="https://i.pinimg.com/736x/c6/3e/ff/c63eff0e495209f8721c43553229b466.jpg" 
+              alt="Logo" 
+              className="w-24 h-24 mx-auto rounded-full object-cover border-2 border-[#2CFFB5] shadow-[0_0_15px_rgba(44,255,181,0.5)]"
+            />
           </div>
+          {/* ------------------ */}
           <h1 className="text-2xl font-black tracking-widest text-white uppercase">
             software engineer
           </h1>
@@ -105,7 +109,7 @@ export default function LoginPage() {
         <form onSubmit={handleLogin} className="space-y-6 pt-4">
           <div className="space-y-2">
             <label className="text-[10px] uppercase text-neutral-400 tracking-wider">
-              Username
+              Username (คือ TEAM_01)
             </label>
             <input
               type="text"
@@ -119,7 +123,7 @@ export default function LoginPage() {
 
           <div className="space-y-2">
             <label className="text-[10px] uppercase text-neutral-400 tracking-wider">
-              Password
+              Password (คือ 123456)
             </label>
             <input
               type="password"
