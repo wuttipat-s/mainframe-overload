@@ -84,7 +84,7 @@ export default function LoginPage() {
         <form onSubmit={handleLogin} className="space-y-6 pt-4">
           <div className="space-y-2">
             <label className="text-[10px] uppercase text-neutral-400 tracking-wider">
-              Username
+              Username (คือ TEAM_01)
             </label>
             <input
               type="text"
@@ -98,7 +98,7 @@ export default function LoginPage() {
 
           <div className="space-y-2">
             <label className="text-[10px] uppercase text-neutral-400 tracking-wider">
-              Password
+              Password (คือ 123456)
             </label>
             <input
               type="password"
