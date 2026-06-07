@@ -36,7 +36,6 @@ const STAGE_MISSIONS: Record<string, Mission> = {
   }
 };
 
-// 💬 คลังข้อความปั่นๆ จากพี่รหัส
 const MOTIVATION_MSGS: Record<string, string> = {
   "1": "รู้ยัง รู้ยัง ถ้าไม่รู้ก็หยุดตามหาพี่ได้เลย",
   "2": "พี่ไม่ใช่คนเก่าที่เราตามหา เพราฉะนั่นหยุดตามหาพี่",
@@ -52,7 +51,8 @@ export default function StagePage() {
   const [playerId, setPlayerId] = useState("");
   const [userAnswer, setUserAnswer] = useState("");
   const [statusMsg, setStatusMsg] = useState("");
-  const [motivationMsg, setMotivationMsg] = useState(""); // ⚡ State สำหรับโชว์ข้อความให้กำลังใจ
+  const [showPopup, setShowPopup] = useState(false); // ⚡ ควบคุมการโชว์ Popup
+  const [motivationMsg, setMotivationMsg] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [dbCorrectAnswer, setDbCorrectAnswer] = useState("");
 
@@ -90,7 +90,6 @@ export default function StagePage() {
         if (alreadyCleared) {
           setUserAnswer(config.secret_answer || "");
           setStatusMsg("✅ REVIEW MODE: คุณได้ทำการถอดรหัสด่านนี้สำเร็จไปแล้ว");
-          setMotivationMsg(MOTIVATION_MSGS[stageId] || ""); // ⚡ โชว์ข้อความปั่นทิ้งไว้ตอนกลับมาดูโหมด Review ด้วย
         }
 
         const isStageActive = config.is_active !== false;
@@ -175,17 +174,13 @@ export default function StagePage() {
 
     setIsLoading(true);
     setStatusMsg("");
-    setMotivationMsg("");
 
     const formattedUserAns = userAnswer.trim().replace(/\s+/g, ""); 
     const formattedCorrectAns = dbCorrectAnswer.trim().replace(/\s+/g, ""); 
 
     if (formattedUserAns.toLowerCase() === formattedCorrectAns.toLowerCase()) {
-      setStatusMsg("⚡ ACCESS GRANTED: คำตอบถูกต้อง! กำลังบันทึกข้อมูลเข้าระบบ...");
+      setStatusMsg("⚡ ACCESS GRANTED: กำลังอัปเดตระบบ...");
       
-      // ⚡ โชว์ข้อความให้กำลังใจน้องๆ!
-      setMotivationMsg(MOTIVATION_MSGS[stageId] || "");
-
       try {
         const nextStageNum = parseInt(stageId) + 1;
         const isGameFinished = nextStageNum > 3;
@@ -203,10 +198,9 @@ export default function StagePage() {
 
         localStorage.setItem(`ans_${playerId}_stage_${stageId}`, userAnswer);
 
-        // ⚡ เพิ่มเวลาดีเลย์เป็น 4 วินาที ให้น้องมีเวลาอ่านข้อความให้เจ็บใจเล่นก่อนโดนเด้งกลับหน้าเลือกด่าน
-        setTimeout(() => {
-          router.push(`/stage`);
-        }, 4000);
+        // ⚡ เปิดการแสดงผล Popup ทันทีที่เซฟข้อมูลเสร็จ
+        setMotivationMsg(MOTIVATION_MSGS[stageId] || "");
+        setShowPopup(true);
 
       } catch (err: any) {
         setStatusMsg(`DATABASE ERROR: ${err.message}`);
@@ -221,6 +215,36 @@ export default function StagePage() {
 
   return (
     <main className="flex min-h-screen flex-col bg-black text-[#2CFFB5] font-mono p-6 selection:bg-[#2CFFB5] selection:text-black">
+      
+      {/* ⚡ Popup Modal เด้งกลางหน้าจอเมื่อตอบถูก */}
+      {showPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-6 animate-in fade-in duration-300">
+          <div className="border-2 border-[#2CFFB5] bg-[#050505] rounded-xl p-8 max-w-md w-full text-center space-y-6 shadow-[0_0_50px_rgba(44,255,181,0.2)]">
+            <div className="space-y-2">
+              <div className="text-[10px] text-neutral-400 uppercase tracking-widest animate-pulse">
+                INCOMING INTERCEPTED MESSAGE
+              </div>
+              <h2 className="text-xl font-bold text-white tracking-wider">
+                FROM: UNKNOWN_ADMIN
+              </h2>
+            </div>
+            
+            <div className="bg-[#2CFFB5]/10 border border-[#2CFFB5]/30 p-6 rounded-lg">
+              <p className="text-[#2CFFB5] text-lg font-bold leading-relaxed">
+                "{motivationMsg}"
+              </p>
+            </div>
+
+            <button
+              onClick={() => router.push("/stage")}
+              className="w-full bg-[#2CFFB5] text-black hover:bg-emerald-400 font-black text-sm py-4 rounded transition-all uppercase tracking-widest shadow-[0_0_15px_rgba(44,255,181,0.2)]"
+            >
+              RETURN TO MISSION_HUB
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="flex justify-between items-center border-b border-neutral-900 pb-4 mb-6">
         <div>
           <span className="text-white font-bold">OPERATOR_ID:</span> <span className="text-[#2CFFB5] font-bold">{username || "FETCHING..."}</span>
@@ -295,14 +319,6 @@ export default function StagePage() {
                     : "bg-red-500/5 border-red-500/30 text-red-400"
                 }`}>
                   {statusMsg}
-                </div>
-              )}
-
-              {/* ⚡ กล่องข้อความจากพี่รหัส (จะเด้งขึ้นมาเด่นๆ ตอนน้องตอบถูก) */}
-              {motivationMsg && (
-                <div className="mt-4 p-5 border-2 border-dashed border-[#2CFFB5] bg-[#2CFFB5]/10 rounded-lg text-center shadow-[0_0_20px_rgba(44,255,181,0.2)] animate-pulse">
-                  <div className="text-[10px] text-neutral-400 mb-2 uppercase tracking-widest">INCOMING MESSAGE FROM ADMIN</div>
-                  <p className="text-[#2CFFB5] text-lg font-bold tracking-wider">{motivationMsg}</p>
                 </div>
               )}
             </form>
