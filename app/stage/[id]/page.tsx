@@ -237,9 +237,18 @@ export default function StagePage() {
         <div>
           <span className="text-white font-bold">OPERATOR_ID:</span> <span className="text-[#2CFFB5] font-bold">{username || "FETCHING..."}</span>
         </div>
-        <div className="text-xs border border-neutral-800 text-neutral-500 px-3 py-1 rounded">
-          SECURE CONNECTION ACTIVE
-        </div>
+        {/* ⚡ เปลี่ยนจาก div เป็น button และเพิ่ม onClick */}
+        <button 
+          onClick={() => {
+            if (confirm("ต้องการตัดการเชื่อมต่อ (Log out) ใช่หรือไม่?")) {
+              localStorage.clear();
+              router.push("/");
+            }
+          }}
+          className="text-xs border border-neutral-800 text-neutral-500 hover:text-red-500 hover:border-red-500 hover:bg-red-950/20 px-3 py-1 rounded transition-all cursor-pointer uppercase tracking-wider"
+        >
+          SECURE CONNECTION ACTIVE (DISCONNECT)
+        </button>
       </div>
 
       <div className="flex-1 max-w-4xl w-full mx-auto flex flex-col justify-center my-4">
