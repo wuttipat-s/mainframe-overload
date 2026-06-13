@@ -14,7 +14,6 @@ interface PlayerProgress {
 interface GameConfig {
   level_id: number;
   is_active: boolean;
-  unlock_time: string;
   secret_answer: string;
 }
 
@@ -41,10 +40,10 @@ export default function AdminDashboard() {
       if (progressErr) throw progressErr;
       setPlayers(progressData || []);
 
-      // 2. ดึงสถานะการล็อกด่านและเฉลยปัจจุบัน
+      // 2. ดึงสถานะการล็อกด่านและเฉลยปัจจุบัน (ลบ unlock_time ออกแล้ว)
       const { data: configData, error: configErr } = await supabase
         .from("game_config")
-        .select("level_id, is_active, unlock_time, secret_answer")
+        .select("level_id, is_active, secret_answer")
         .order("level_id", { ascending: true });
 
       if (configErr) throw configErr;
@@ -62,7 +61,7 @@ export default function AdminDashboard() {
     return () => clearInterval(interval);
   }, []);
 
-  // บันทึกปรับแต่งระดับด่าน (เปิด-ปิด และเปลี่ยนเวลา)
+  // บันทึกปรับแต่งระดับด่าน (เปิด-ปิด)
   const handleUpdateConfig = async (levelId: number, fields: Partial<GameConfig>) => {
     try {
       const { error } = await supabase
@@ -161,17 +160,7 @@ export default function AdminDashboard() {
                   </label>
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-[9px] text-neutral-500 uppercase">UNLOCK SCHEDULE</label>
-                  <input
-                    type="datetime-local"
-                    value={cfg.unlock_time ? cfg.unlock_time.slice(0, 16) : ""}
-                    onChange={(e) => handleUpdateConfig(cfg.level_id, { unlock_time: new Date(e.target.value).toISOString() })}
-                    className="w-full text-xs bg-black border border-neutral-900 rounded p-1.5 text-white focus:outline-none focus:border-[#2CFFB5]"
-                  />
-                </div>
-
-                <div className="text-[10px] text-neutral-500">
+                <div className="text-[10px] text-neutral-500 pt-2 border-t border-neutral-900">
                   เฉลยด่าน: <span className="text-[#2CFFB5]">{cfg.secret_answer}</span>
                 </div>
               </div>
