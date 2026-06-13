@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
 interface Mission {
@@ -22,7 +22,7 @@ const STAGE_MISSIONS: Record<string, Mission> = {
   },
   "2": {
     title: "STAGE_02: ถอดสมการดัชนีวงกต (The Hidden Pointer Offset)",
-    story: "ภารกิจ: การตามล่าหาตัวตนแอดมินเริ่มลึกลับขึ้น! คราวนี้ระบบกล้องวงจรปิดต้องการพิกัดดัชนี (Index Pointer) จำนวน 5 หลักเพื่อไปสุ่มเจาะดึงลักษณะรูปโปรไฟล์ของแอดมินออกจากคลังข้อมูล\n\nแต่แอดมินดันซ่อนเลขดัชนีทั้ง 5 ตัวเอาไว้ในรูปของสมการตรรกศาสตร์! น้องๆ ต้องคำนวณหาผลลัพธ์ของ `[Key_A, Key_B, Key_C, Key_D, Key_E]` ออกมาก่อน แล้วจึงนำตัวเลขเหล่านั้นไปนับช่องดึงคำตอบจากกล่องสุ่มทั้ง 5 กล่องตามลำดับ\n\n📊 [สมการถอดรหัสพิกัดลับ]:\n• Key_A = len(\"iPhone\") - 1\n• Key_B = 16 // 4\n• Key_C = int(\"100\", 2)  *(คำนวณเลขฐานสองให้เป็นฐานสิบ)*\n• Key_D = 25 // 5\n• Key_E = 0b100         *(ค่าของตัวแปรประเภท Binary Literals)*\n\n📦 [กล่องสุ่มคลังคำศัพท์]:\n• กล่องที่ 1: [\"คอร์ส\", \"เกรด\", \"อาจารย์\", \"วิชา\", \"การบ้าน\", \"โปร\"]\n• กล่องที่ 2: [\"เซิร์ฟ\", \"ระบบ\", \"ดาต้า\", \"คลาวด์\", \"ไฟล์\"]\n• กล่องที่ 3: [\"แว่น\", \"หมวก\", \"กางเกง\", \"เข็มขัด\", \"เสื้อ\"]\n• กล่องที่ 4: [\"ลาย\", \"ขนาด\", \"ยี่ห้อ\", \"ประเภท\", \"เนื้อผ้า\", \"สี\"]\n• กล่องที่ 5: [\"ขาว\", \"เทา\", \"น้ำเงิน\", \"เขียว\", \"ดำ\"]",
+    story: "ภารกิจ: การตามล่าหาตัวตนแอดมินเริ่มลึกลับขึ้น! คราวนี้ระบบกล้องวงจรปิดต้องการพิกัดดัชนี (Index Pointer) จำนวน 5 หลักเพื่อไปสุ่มเจาะดึงลักษณะรูปโปรไฟล์ของแอดมินออกจากคลังข้อมูล\n\nแต่แอดมินดันซ่อนเลขดัชนีทั้ง 5 ตัวเอาไว้ในรูปของสมการตรรกศาสตร์! น้องๆ ต้องคำนวณหาผลลัพธ์ของ `[Key_A, Key_B, Key_C, Key_D, Key_E]` ออกมาก่อน แล้วจึงนำตัวเลขเหล่านั้นไปนับช่องดึงคำตอบจากกล่องสุ่มทั้ง 5 กล่องตามลำดับ\n\n📊 [สมการถอดรหัสพิกัดลับ]:\n• Key_A = len(\"iPhone\") - 1\n• Key_B = 16 // 4\n• Key_C = int(\"100\", 2)  *(คำนวณเลขฐานสองให้เป็นฐานสิบ)*\n• Key_D = 25 // 5\n• Key_E = 0b100         *(ค่า of ตัวแปรประเภท Binary Literals)*\n\n📦 [กล่องสุ่มคลังคำศัพท์]:\n• กล่องที่ 1: [\"คอร์ส\", \"เกรด\", \"อาจารย์\", \"วิชา\", \"การบ้าน\", \"โปร\"]\n• กล่องที่ 2: [\"เซิร์ฟ\", \"ระบบ\", \"ดาต้า\", \"คลาวด์\", \"ไฟล์\"]\n• กล่องที่ 3: [\"แว่น\", \"หมวก\", \"กางเกง\", \"เข็มขัด\", \"เสื้อ\"]\n• กล่องที่ 4: [\"ลาย\", \"ขนาด\", \"ยี่ห้อ\", \"ประเภท\", \"เนื้อผ้า\", \"สี\"]\n• กล่องที่ 5: [\"ขาว\", \"เทา\", \"น้ำเงิน\", \"เขียว\", \"ดำ\"]",
     hint: "คำใบ้จากระบบ: ถอดสมการทั้ง 5 ข้อให้ได้ตัวเลขออกมาก่อน (ย้ำว่าเริ่มนับคำแรกในกล่องสุ่มจากดัชนีเลข 0) แล้วเอาคำศัพท์ภาษาไทยที่ได้จากทั้ง 5 กล่องมาเชื่อมต่อกันแบบไม่มีเว้นวรรค!",
     label: "ENTER IDENTITY CLUE (ลักษณะโปรไฟล์แอดมินที่ถอดรหัสสมบูรณ์)",
     placeholder: "กรอกลักษณะโปรไฟล์ภาษาไทย..."
@@ -44,9 +44,9 @@ const MOTIVATION_MSGS: Record<string, string> = {
 
 export default function StagePage() {
   const router = useRouter();
-  const rawParams = useParams();
-  const stageId = (rawParams?.id as string) || "1";
 
+  // ⚡ ใช้ด่านปัจจุบันคุมผ่าน State แทนการแกะพารามิเตอร์จาก URL เพื่อแก้ปัญหาหน้าจอค้าง
+  const [stageId, setStageId] = useState<string>("1");
   const [username, setUsername] = useState("");
   const [playerId, setPlayerId] = useState("");
   const [userAnswer, setUserAnswer] = useState("");
@@ -57,46 +57,43 @@ export default function StagePage() {
   const [dbCorrectAnswer, setDbCorrectAnswer] = useState("");
 
   const [isLockedByAdmin, setIsLockedByAdmin] = useState(false);
-  const [isCleared, setIsCleared] = useState(false);
 
   const checkAccessAndLockState = async (currentPlayerId: string) => {
-    if (!currentPlayerId || !stageId) return;
+    if (!currentPlayerId) return;
 
     try {
-      // 1. ตรวจสอบสถานะการเล่นของผู้เล่นปัจจุบัน
+      // 1. ดึงสเตตัสความคืบหน้าของผู้เล่นปัจจุบัน
       const { data: progress } = await supabase
         .from("player_progress")
         .select("current_stage, is_completed")
         .eq("player_id", currentPlayerId)
         .maybeSingle();
 
-      // ⚡ FIX: รีเซ็ตสถานะเป็น false เสมอถ้าไม่ตรงเงื่อนไข ป้องกัน State ค้างข้ามคน
-      let alreadyCleared = false;
       if (progress) {
-        if (progress.is_completed || Number(progress.current_stage) > parseInt(stageId)) {
-          alreadyCleared = true;
+        // ถ้าน้องเคลียร์ด่านสุดท้ายครบเรียบร้อยแล้ว ให้สับสเตตัสไปหน้าจบเกม
+        if (progress.is_completed) {
+          setStageId("4"); 
+          return;
         }
-      }
-      setIsCleared(alreadyCleared);
 
-      // 2. ตรวจสอบการตั้งค่าด่านจาก Admin (ถอด unlock_time ออกแล้ว)
+        // ดันด่านขึ้นหน้าจออัตโนมัติ ใครตอบถูกด่านเปลี่ยนทันที ไม่ทับสิทธิ์กัน
+        const currentDbStage = progress.current_stage.toString();
+        setStageId(currentDbStage);
+      }
+
+      // 2. ตรวจสอบการเปิด-ปิดล็อกด่านจาก Admin (ดึงเฉพาะโครงสร้างเดิม ไม่มีคำใบ้สด)
+      const activeStageNum = progress ? progress.current_stage : parseInt(stageId);
       const { data: config } = await supabase
         .from("game_config")
         .select("is_active, secret_answer")
-        .eq("level_id", parseInt(stageId))
+        .eq("level_id", activeStageNum)
         .maybeSingle();
 
       if (config) {
         setDbCorrectAnswer(config.secret_answer || "");
-        
-        if (alreadyCleared) {
-          setUserAnswer(config.secret_answer || "");
-          // ป้องกันไม่ให้ข้อความกระพริบซ้ำๆ ทุก 3 วินาที
-          setStatusMsg((prev) => prev.includes("REVIEW MODE") ? prev : "✅ REVIEW MODE: คุณได้ทำการถอดรหัสด่านนี้สำเร็จไปแล้ว");
-        }
 
-        // เช็คการถูกล็อคจาก Admin
-        if (!alreadyCleared && config.is_active === false) {
+        // บล็อกหน้าจอน้องทันทีถ้าสถานะด่านนั้นในฝั่งแอดมินถูกติ๊กปิด (is_active === false)
+        if (config.is_active === false) {
           setIsLockedByAdmin(true);
         } else {
           setIsLockedByAdmin(false);
@@ -112,7 +109,6 @@ export default function StagePage() {
     const storedName = localStorage.getItem("game_username");
 
     if (!storedId || !storedName) {
-      console.log("No game session active on this terminal. Redirecting to auth node...");
       router.push("/");
       return;
     }
@@ -122,12 +118,14 @@ export default function StagePage() {
 
     checkAccessAndLockState(storedId);
     
+    // ตั้งเวลา Polling รันซิงก์สถานะหลังบ้านทุกๆ 3 วินาที
     const interval = setInterval(() => checkAccessAndLockState(storedId), 3000);
     return () => clearInterval(interval);
-  }, [stageId, router]);
+  }, [router]);
 
   const currentMission = STAGE_MISSIONS[stageId];
 
+  // หน้าจอเมื่อผู้เล่นเจาะระบบเคลียร์ครบหมดทุกด่านแล้ว
   if (!currentMission) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center bg-black font-mono p-6 text-[#2CFFB5]">
@@ -155,7 +153,6 @@ export default function StagePage() {
 
   const handleVerifyAnswer = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isCleared) return;
 
     setIsLoading(true);
     setStatusMsg("");
@@ -170,6 +167,7 @@ export default function StagePage() {
         const nextStageNum = parseInt(stageId) + 1;
         const isGameFinished = nextStageNum > 3;
 
+        // บันทึกขยับสถานะด่านลงคอลัมน์เดิมใน Supabase
         const { error } = await supabase
           .from("player_progress")
           .upsert({
@@ -185,6 +183,7 @@ export default function StagePage() {
 
         setMotivationMsg(MOTIVATION_MSGS[stageId] || "");
         setShowPopup(true);
+        setUserAnswer(""); // ล้างกล่องข้อความพิมพ์คำตอบเก่าออกเพื่อรอบรรจุโจทย์ใหม่
 
       } catch (err: any) {
         setStatusMsg(`DATABASE ERROR: ${err.message}`);
@@ -195,6 +194,12 @@ export default function StagePage() {
       setStatusMsg("❌ ACCESS DENIED: รหัสตรวจสอบไม่ถูกต้อง ถอดรหัสล้มเหลว!");
       setIsLoading(false);
     }
+  };
+
+  const handleClosePopup = () => {
+    setShowPopup(false);
+    // บังคับสั่งรันเช็คสเตตัสในเครื่องเพื่อรีโหลดเปลี่ยนโจทย์ไปด่านถัดไปทันที
+    checkAccessAndLockState(playerId);
   };
 
   return (
@@ -219,10 +224,10 @@ export default function StagePage() {
             </div>
 
             <button
-              onClick={() => router.push("/stage")}
+              onClick={handleClosePopup}
               className="w-full bg-[#2CFFB5] text-black hover:bg-emerald-400 font-black text-sm py-4 rounded transition-all uppercase tracking-widest shadow-[0_0_15px_rgba(44,255,181,0.2)]"
             >
-              RETURN TO MISSION_HUB
+              PROCEED TO NEXT_MISSION ➔
             </button>
           </div>
         </div>
@@ -232,12 +237,9 @@ export default function StagePage() {
         <div>
           <span className="text-white font-bold">OPERATOR_ID:</span> <span className="text-[#2CFFB5] font-bold">{username || "FETCHING..."}</span>
         </div>
-        <button
-          onClick={() => router.push("/stage")}
-          className="text-xs border border-neutral-800 text-neutral-400 px-3 py-1 rounded hover:border-[#2CFFB5] hover:text-white transition-colors"
-        >
-          RETURN TO MISSION_HUB
-        </button>
+        <div className="text-xs border border-neutral-800 text-neutral-500 px-3 py-1 rounded">
+          SECURE CONNECTION ACTIVE
+        </div>
       </div>
 
       <div className="flex-1 max-w-4xl w-full mx-auto flex flex-col justify-center my-4">
@@ -247,7 +249,7 @@ export default function StagePage() {
               ⚠️ SYSTEM LOCKED BY ADMIN ⚠️
             </h2>
             <p className="text-neutral-400 text-xs leading-relaxed max-w-md mx-auto">
-              ระบบป้องกันตัวเองของ Mainframe ทำงาน! ด่านนี้ถูกระงับการเข้าถึงชั่วคราว
+              ระบบป้องกันตัวเองของ Mainframe ทำงาน! ด่านนี้ถูกระงับการเข้าถึงชั่วคราวโดยพี่รหัสของคุณเพื่อรอคำสั่งถัดไป
             </p>
             <div className="text-6xl font-black text-red-500 font-mono tracking-wider py-2">
               OFFLINE
@@ -258,7 +260,6 @@ export default function StagePage() {
             <div className="border border-neutral-900 bg-[#050505] rounded-lg p-6 shadow-2xl space-y-4">
               <h2 className="text-sm font-bold tracking-wider text-white border-b border-neutral-900 pb-3 uppercase flex items-center gap-2">
                 {currentMission.title}
-                {isCleared && <span className="ml-2 text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded border border-emerald-500/30">CLEARED</span>}
               </h2>
               <p className="text-neutral-300 text-sm leading-relaxed whitespace-pre-line bg-black/40 p-4 rounded border border-neutral-900/40 font-mono">
                 {currentMission.story}
@@ -277,27 +278,25 @@ export default function StagePage() {
                   <input
                     type="text"
                     required
-                    disabled={isLoading || isCleared}
+                    disabled={isLoading}
                     value={userAnswer}
                     onChange={(e) => setUserAnswer(e.target.value)}
                     placeholder={currentMission.placeholder}
                     className="flex-1 bg-[#050505] border border-neutral-900 rounded px-4 py-3 text-sm text-white focus:outline-none focus:border-[#2CFFB5] transition-colors font-mono tracking-wide disabled:opacity-70 disabled:text-[#2CFFB5]"
                   />
-                  {!isCleared && (
-                    <button
-                      type="submit"
-                      disabled={isLoading}
-                      className="border border-[#2CFFB5] text-[#2CFFB5] hover:bg-[#2CFFB5] hover:text-black font-semibold text-xs px-8 rounded transition-all uppercase tracking-widest disabled:opacity-50"
-                    >
-                      {isLoading ? "RUNNING..." : "EXECUTE"}
-                    </button>
-                  )}
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="border border-[#2CFFB5] text-[#2CFFB5] hover:bg-[#2CFFB5] hover:text-black font-semibold text-xs px-8 rounded transition-all uppercase tracking-widest disabled:opacity-50"
+                  >
+                    {isLoading ? "RUNNING..." : "EXECUTE"}
+                  </button>
                 </div>
               </div>
 
               {statusMsg && (
                 <div className={`text-xs p-3 rounded text-center border ${
-                  statusMsg.includes("SUCCESS") || statusMsg.includes("GRANTED") || statusMsg.includes("REVIEW")
+                  statusMsg.includes("SUCCESS") || statusMsg.includes("GRANTED")
                     ? "bg-[#2cffb5]/5 border-[#2CFFB5]/30 text-[#2CFFB5]" 
                     : "bg-red-500/5 border-red-500/30 text-red-400"
                 }`}>
@@ -310,7 +309,7 @@ export default function StagePage() {
       </div>
 
       <footer className="text-center text-[9px] text-neutral-700 mt-6">
-        TERMINAL OVERLOAD INTERFACE v2.2.4 - STATE LEAKAGE FIXED
+        TERMINAL OVERLOAD INTERFACE v2.5.0 - PRODUCTION STABLE
       </footer>
     </main>
   );
