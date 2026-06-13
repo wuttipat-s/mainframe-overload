@@ -4,11 +4,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
-type LoginSlot = "player1" | "player2" | "admin";
-
 export default function LoginPage() {
   const router = useRouter();
-  const [loginSlot, setLoginSlot] = useState<LoginSlot>("player1");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
@@ -31,7 +28,7 @@ export default function LoginPage() {
     setErrorMsg("");
 
     try {
-      // 1. ค้นหาผู้ใช้จากตาราง profiles
+      // 1. ค้นหาผู้ใช้จากตาราง profiles โดยตรงจาก Username และ Password
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
@@ -47,32 +44,23 @@ export default function LoginPage() {
         return;
       }
 
-      // 2. ตรวจสอบสิทธิ์ให้ตรงกับ Slot ที่เลือก
-      if (loginSlot === "admin" && data.role !== "admin") {
-        setErrorMsg("ACCESS DENIED: บัญชีนี้ไม่มีสิทธิ์แอดมิน");
-        setIsLoading(false);
-        return;
-      }
-
-      if ((loginSlot === "player1" || loginSlot === "player2") && data.role === "admin") {
-        setErrorMsg("ACCESS DENIED: บัญชีแอดมินไม่สามารถลงทะเบียนในช่องผู้เล่นได้");
-        setIsLoading(false);
-        return;
-      }
-
-      // ⚡ [CRITICAL FIX]: เคลียร์ค่าเก่าทั้งหมดในเครื่องทิ้งก่อน เพื่อป้องกันสิทธิ์ Admin เดิมค้างในเบราว์เซอร์
+      // ⚡ [CRITICAL FIX]: เคลียร์ค่าเก่าทั้งหมดในเครื่องทิ้งก่อน เพื่อป้องกันสิทธิ์เดิมค้าง
       localStorage.clear();
 
-      // 3. บันทึกข้อมูลด้วยคีย์มาตรฐานร่วมกัน (เพื่อให้หน้า /stage อ่านค่าได้ถูกต้อง ไม่เด้งกลับ)
+      // 2. ตรวจสอบสิทธิ์และดึงบทบาทจาก Database โดยตรง (Auto-Detect)
+      // สมมติว่า data.role ใน DB เก็บค่าเป็น 'admin', 'player1', 'player2'
+      const userRole = data.role; 
+
+      // 3. บันทึกข้อมูลลง LocalStorage
       localStorage.setItem("game_player_id", data.id);
       localStorage.setItem("game_username", data.username);
-      localStorage.setItem("game_role", data.role);
-      localStorage.setItem("game_slot", loginSlot); // เก็บไว้ระบุว่าเป็น Player 1 หรือ 2
+      localStorage.setItem("game_role", userRole);
+      localStorage.setItem("game_slot", userRole); // ใช้ role เป็นตัวแยก slot ไปเลย (player1 / player2 / admin)
 
       // 4. แยกเส้นทางตามบทบาทภารกิจเด็ดขาด
-      if (loginSlot === "admin") {
+      if (userRole === "admin") {
         router.push("/admin/dashboard");
-      } else {
+      } else if (userRole === "player1" || userRole === "player2") {
         
         // ⚡ [AUTO-INSERT SYSTEM]: ตรวจสอบและสร้างแถว Progress ในฐานข้อมูลก้อนกลาง
         const { data: checkProgress, error: progressError } = await supabase
@@ -98,8 +86,10 @@ export default function LoginPage() {
           console.log("Generated player progress for:", data.username);
         }
 
-        // 🚀 ล็อกอินผ่านแล้ว ให้พุ่งตรงเข้าสู่หน้าเลือกด่านของคอมเครื่องนั้นๆ ทันที ไม่ต้องรออีกคน
+        // ล็อกอินผ่านแล้ว พุ่งตรงเข้าสู่หน้าเล่นเกมของเครื่องนั้นๆ ทันที
         router.push("/stage");
+      } else {
+        setErrorMsg("ACCESS DENIED: ไม่พบสิทธิ์การใช้งานที่ถูกต้อง");
       }
     } catch (err: any) {
       setErrorMsg(`SYSTEM ERROR: ${err.message}`);
@@ -132,43 +122,25 @@ export default function LoginPage() {
             />
           </div>
           <h1 className="text-xl font-black tracking-widest text-white uppercase">
-            software engineer
+            RECON SYSTEM
           </h1>
           <p className="text-[10px] text-neutral-500 uppercase tracking-widest">
             Identity Verification Node
           </p>
         </div>
 
-        {/* 🟢 ส่วนแสดงสถานะผู้ใช้งานปัจจุบันของเครื่องนี้ */}
+        {/* ส่วนแสดงสถานะผู้ใช้งานปัจจุบันของเครื่องนี้ */}
         <div className="text-[10px] uppercase font-bold tracking-wider">
           <div className={`p-3 border rounded text-center ${activeUser ? "border-[#2CFFB5]/40 bg-[#2CFFB5]/5 text-[#2CFFB5]" : "border-neutral-850 bg-neutral-900/50 text-neutral-500"}`}>
             CURRENT TERMINAL ACTIVE: {activeUser ? `${activeSlot?.toUpperCase()} (${activeUser})` : "NO ACTIVE SESSION"}
           </div>
         </div>
 
-        {/* 🕹️ ปุ่มเลือก Slot ยืนยันตัวตน */}
-        <div className="grid grid-cols-3 gap-1 bg-[#0a0a0a] p-1 rounded border border-neutral-800">
-          {(["player1", "player2", "admin"] as LoginSlot[]).map((slot) => (
-            <button
-              key={slot}
-              type="button"
-              onClick={() => { setLoginSlot(slot); setErrorMsg(""); }}
-              className={`text-[10px] font-bold uppercase py-2 rounded transition-all tracking-wider ${
-                loginSlot === slot 
-                  ? "bg-[#2CFFB5] text-black shadow-[0_0_10px_rgba(44,255,181,0.3)]" 
-                  : "text-neutral-400 hover:text-white"
-              }`}
-            >
-              {slot === "admin" ? "ADMIN" : slot === "player1" ? "PLAYER 1" : "PLAYER 2"}
-            </button>
-          ))}
-        </div>
-
-        {/* ฟอร์มการยืนยันตัวตน */}
+        {/* ฟอร์มการยืนยันตัวตน (ช่องเดียวรวมกันหมด) */}
         <form onSubmit={handleLogin} className="space-y-4">
           <div className="space-y-1">
             <label className="text-[9px] uppercase text-neutral-400 tracking-wider">
-              Username สำหรับช่อง [{loginSlot.toUpperCase()}]
+              Username / Access Code
             </label>
             <input
               type="text"
@@ -176,7 +148,7 @@ export default function LoginPage() {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               className="w-full bg-[#0a0a0a] border border-neutral-800 rounded px-3 py-2.5 text-sm text-white focus:outline-none focus:border-[#2CFFB5] focus:ring-1 focus:ring-[#2CFFB5]/50 transition-all font-mono"
-              placeholder="e.g. TEAM_01"
+              placeholder="Enter your credential"
             />
           </div>
 
@@ -205,7 +177,7 @@ export default function LoginPage() {
             disabled={isLoading}
             className="w-full mt-2 border-2 border-[#2CFFB5] text-[#2CFFB5] hover:bg-[#2CFFB5] hover:text-black font-black text-xs py-3 rounded transition-all uppercase tracking-widest disabled:opacity-50"
           >
-            {isLoading ? "VERIFYING..." : `INITIALIZE ${loginSlot.toUpperCase()}`}
+            {isLoading ? "VERIFYING..." : "ENTER SYSTEM"}
           </button>
         </form>
 
