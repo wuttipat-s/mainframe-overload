@@ -51,7 +51,7 @@ export default function StagePage() {
   const [playerId, setPlayerId] = useState("");
   const [userAnswer, setUserAnswer] = useState("");
   const [statusMsg, setStatusMsg] = useState("");
-  const [showPopup, setShowPopup] = useState(false); // ⚡ ควบคุมการโชว์ Popup
+  const [showPopup, setShowPopup] = useState(false); 
   const [motivationMsg, setMotivationMsg] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [dbCorrectAnswer, setDbCorrectAnswer] = useState("");
@@ -117,13 +117,16 @@ export default function StagePage() {
   };
 
   useEffect(() => {
+    // ⚡ [CRITICAL FIX]: เปลี่ยนมาอ่านค่าจากคีย์หลักก้อนเดียว (game_player_id และ game_username) ของแต่ละเครื่อง
     const storedId = localStorage.getItem("game_player_id");
     const storedName = localStorage.getItem("game_username");
 
     if (!storedId || !storedName) {
+      console.log("No game session active on this terminal. Redirecting to auth node...");
       router.push("/");
       return;
     }
+    
     setPlayerId(storedId);
     setUsername(storedName);
 
@@ -198,7 +201,6 @@ export default function StagePage() {
 
         localStorage.setItem(`ans_${playerId}_stage_${stageId}`, userAnswer);
 
-        // ⚡ เปิดการแสดงผล Popup ทันทีที่เซฟข้อมูลเสร็จ
         setMotivationMsg(MOTIVATION_MSGS[stageId] || "");
         setShowPopup(true);
 
@@ -216,7 +218,6 @@ export default function StagePage() {
   return (
     <main className="flex min-h-screen flex-col bg-black text-[#2CFFB5] font-mono p-6 selection:bg-[#2CFFB5] selection:text-black">
       
-      {/* ⚡ Popup Modal เด้งกลางหน้าจอเมื่อตอบถูก */}
       {showPopup && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-6 animate-in fade-in duration-300">
           <div className="border-2 border-[#2CFFB5] bg-[#050505] rounded-xl p-8 max-w-md w-full text-center space-y-6 shadow-[0_0_50px_rgba(44,255,181,0.2)]">
