@@ -57,30 +57,32 @@ export default function StagePage() {
   const [dbCorrectAnswer, setDbCorrectAnswer] = useState("");
 
   const [isLockedByAdmin, setIsLockedByAdmin] = useState(false);
-  const [cooldownLeft, setCooldownLeft] = useState(0);
   const [isCleared, setIsCleared] = useState(false);
 
   const checkAccessAndLockState = async (currentPlayerId: string) => {
     if (!currentPlayerId || !stageId) return;
 
     try {
+      // 1. ตรวจสอบสถานะการเล่นของผู้เล่นปัจจุบัน
       const { data: progress } = await supabase
         .from("player_progress")
         .select("current_stage, is_completed")
         .eq("player_id", currentPlayerId)
         .maybeSingle();
 
+      // ⚡ FIX: รีเซ็ตสถานะเป็น false เสมอถ้าไม่ตรงเงื่อนไข ป้องกัน State ค้างข้ามคน
       let alreadyCleared = false;
       if (progress) {
         if (progress.is_completed || Number(progress.current_stage) > parseInt(stageId)) {
           alreadyCleared = true;
-          setIsCleared(true);
         }
       }
+      setIsCleared(alreadyCleared);
 
+      // 2. ตรวจสอบการตั้งค่าด่านจาก Admin (ถอด unlock_time ออกแล้ว)
       const { data: config } = await supabase
         .from("game_config")
-        .select("unlock_time, is_active, secret_answer")
+        .select("is_active, secret_answer")
         .eq("level_id", parseInt(stageId))
         .maybeSingle();
 
@@ -89,24 +91,13 @@ export default function StagePage() {
         
         if (alreadyCleared) {
           setUserAnswer(config.secret_answer || "");
-          setStatusMsg("✅ REVIEW MODE: คุณได้ทำการถอดรหัสด่านนี้สำเร็จไปแล้ว");
+          // ป้องกันไม่ให้ข้อความกระพริบซ้ำๆ ทุก 3 วินาที
+          setStatusMsg((prev) => prev.includes("REVIEW MODE") ? prev : "✅ REVIEW MODE: คุณได้ทำการถอดรหัสด่านนี้สำเร็จไปแล้ว");
         }
 
-        const isStageActive = config.is_active !== false;
-        const unlockDate = new Date(config.unlock_time);
-        const isLockedByTime = Date.now() < unlockDate.getTime();
-
-        if (!alreadyCleared) {
-          if (!isStageActive) {
-            setIsLockedByAdmin(true);
-            setCooldownLeft(999999);
-          } else if (isLockedByTime) {
-            setIsLockedByAdmin(true);
-            const targetTime = Math.ceil((unlockDate.getTime() - Date.now()) / 1000);
-            setCooldownLeft(targetTime);
-          } else {
-            setIsLockedByAdmin(false);
-          }
+        // เช็คการถูกล็อคจาก Admin
+        if (!alreadyCleared && config.is_active === false) {
+          setIsLockedByAdmin(true);
         } else {
           setIsLockedByAdmin(false);
         }
@@ -117,7 +108,6 @@ export default function StagePage() {
   };
 
   useEffect(() => {
-    // ⚡ [CRITICAL FIX]: เปลี่ยนมาอ่านค่าจากคีย์หลักก้อนเดียว (game_player_id และ game_username) ของแต่ละเครื่อง
     const storedId = localStorage.getItem("game_player_id");
     const storedName = localStorage.getItem("game_username");
 
@@ -135,14 +125,6 @@ export default function StagePage() {
     const interval = setInterval(() => checkAccessAndLockState(storedId), 3000);
     return () => clearInterval(interval);
   }, [stageId, router]);
-
-  useEffect(() => {
-    if (cooldownLeft <= 0 || cooldownLeft === 999999) return;
-    const timer = setTimeout(() => {
-      setCooldownLeft(cooldownLeft - 1);
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, [cooldownLeft]);
 
   const currentMission = STAGE_MISSIONS[stageId];
 
@@ -268,7 +250,7 @@ export default function StagePage() {
               ระบบป้องกันตัวเองของ Mainframe ทำงาน! ด่านนี้ถูกระงับการเข้าถึงชั่วคราว
             </p>
             <div className="text-6xl font-black text-red-500 font-mono tracking-wider py-2">
-              {cooldownLeft === 999999 ? "OFFLINE" : `${Math.floor(cooldownLeft / 60)}:${(cooldownLeft % 60).toString().padStart(2, "0")}`}
+              OFFLINE
             </div>
           </div>
         ) : (
@@ -328,7 +310,7 @@ export default function StagePage() {
       </div>
 
       <footer className="text-center text-[9px] text-neutral-700 mt-6">
-        TERMINAL OVERLOAD INTERFACE v2.2.3 - NAVIGATION PATTERN FIXED
+        TERMINAL OVERLOAD INTERFACE v2.2.4 - STATE LEAKAGE FIXED
       </footer>
     </main>
   );
