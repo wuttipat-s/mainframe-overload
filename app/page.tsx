@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
-// กำหนดประเภทสล็อตเพื่อป้องกันการพิมพ์ผิด (Type Safety)
 type LoginSlot = "player1" | "player2" | "admin";
 
 export default function LoginPage() {
@@ -15,15 +14,14 @@ export default function LoginPage() {
   const [errorMsg, setErrorMsg] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // สถานะการเข้าสู่ระบบของแต่ละสล็อต (เอาไว้โชว์บน UI)
-  const [p1Ready, setP1Ready] = useState<string | null>(null);
-  const [p2Ready, setP2Ready] = useState<string | null>(null);
+  // แสดงสถานะผู้ใช้งานปัจจุบันของเครื่องนี้
+  const [activeUser, setActiveUser] = useState<string | null>(null);
+  const [activeSlot, setActiveSlot] = useState<string | null>(null);
 
-  // โหลดสถานะเดิมจาก LocalStorage ตอนเปิดหน้าเว็บ
   useEffect(() => {
     if (typeof window !== "undefined") {
-      setP1Ready(localStorage.getItem("p1_game_username"));
-      setP2Ready(localStorage.getItem("p2_game_username"));
+      setActiveUser(localStorage.getItem("game_username"));
+      setActiveSlot(localStorage.getItem("game_slot"));
     }
   }, []);
 
@@ -38,7 +36,7 @@ export default function LoginPage() {
         .from("profiles")
         .select("*")
         .eq("username", username.trim())
-        .eq("password", password.trim()) // ข้อควรระวัง: ในโปรดักชันจริงควรใช้การ Hash รหัสผ่านนะคร้าบ
+        .eq("password", password.trim())
         .maybeSingle();
 
       if (error) throw error;
@@ -49,7 +47,7 @@ export default function LoginPage() {
         return;
       }
 
-      // 2. ตรวจสอบสิทธิ์ให้ตรงกับกติกาของระบบ
+      // 2. ตรวจสอบสิทธิ์ให้ตรงกับ Slot ที่เลือก
       if (loginSlot === "admin" && data.role !== "admin") {
         setErrorMsg("ACCESS DENIED: บัญชีนี้ไม่มีสิทธิ์แอดมิน");
         setIsLoading(false);
@@ -62,26 +60,21 @@ export default function LoginPage() {
         return;
       }
 
-      // 3. จัดการบันทึกข้อมูลแยกตาม Slot เพื่อไม่ให้ทับกัน
+      // ⚡ [CRITICAL FIX]: เคลียร์ค่าเก่าทั้งหมดในเครื่องทิ้งก่อน เพื่อป้องกันสิทธิ์ Admin เดิมค้างในเบราว์เซอร์
+      localStorage.clear();
+
+      // 3. บันทึกข้อมูลด้วยคีย์มาตรฐานร่วมกัน (เพื่อให้หน้า /stage อ่านค่าได้ถูกต้อง ไม่เด้งกลับ)
+      localStorage.setItem("game_player_id", data.id);
+      localStorage.setItem("game_username", data.username);
+      localStorage.setItem("game_role", data.role);
+      localStorage.setItem("game_slot", loginSlot); // เก็บไว้ระบุว่าเป็น Player 1 หรือ 2
+
+      // 4. แยกเส้นทางตามบทบาทภารกิจเด็ดขาด
       if (loginSlot === "admin") {
-        localStorage.setItem("admin_id", data.id);
-        localStorage.setItem("admin_username", data.username);
-        localStorage.setItem("admin_role", data.role);
-        
         router.push("/admin/dashboard");
       } else {
-        // จัดการฝั่ง Player (Player 1 หรือ Player 2)
-        const prefix = loginSlot === "player1" ? "p1_" : "p2_";
         
-        localStorage.setItem(`${prefix}game_player_id`, data.id);
-        localStorage.setItem(`${prefix}game_username`, data.username);
-        localStorage.setItem(`${prefix}game_role`, data.role);
-
-        // อัปเดต State หน้าจอทันที
-        if (loginSlot === "player1") setP1Ready(data.username);
-        if (loginSlot === "player2") setP2Ready(data.username);
-
-        // ⚡ [AUTO-INSERT SYSTEM]: เช็คและสร้าง Progress ด่าน
+        // ⚡ [AUTO-INSERT SYSTEM]: ตรวจสอบและสร้างแถว Progress ในฐานข้อมูลก้อนกลาง
         const { data: checkProgress, error: progressError } = await supabase
           .from("player_progress")
           .select("player_id")
@@ -96,7 +89,7 @@ export default function LoginPage() {
             .insert([
               {
                 player_id: data.id,
-                current_stage: 1,
+                current_stage: 1, // เริ่มต้นที่ด่าน 1
                 is_completed: false,
               },
             ]);
@@ -105,10 +98,8 @@ export default function LoginPage() {
           console.log("Generated player progress for:", data.username);
         }
 
-        // ล้างฟอร์มเพื่อให้ผู้เล่นอีกคนมาพิมพ์ต่อได้สะดวก
-        setUsername("");
-        setPassword("");
-        setErrorMsg(`SLOT [${loginSlot.toUpperCase()}] AUTHENTICATED!`);
+        // 🚀 ล็อกอินผ่านแล้ว ให้พุ่งตรงเข้าสู่หน้าเลือกด่านของคอมเครื่องนั้นๆ ทันที ไม่ต้องรออีกคน
+        router.push("/stage");
       }
     } catch (err: any) {
       setErrorMsg(`SYSTEM ERROR: ${err.message}`);
@@ -117,11 +108,10 @@ export default function LoginPage() {
     }
   };
 
-  // ฟังก์ชันล้างเซสชันทั้งหมดเผื่อต้องการเริ่มล็อกอินใหม่
   const handleResetAll = () => {
     localStorage.clear();
-    setP1Ready(null);
-    setP2Ready(null);
+    setActiveUser(null);
+    setActiveSlot(null);
     setErrorMsg("ALL SESSIONS CLEARED");
   };
 
@@ -145,21 +135,18 @@ export default function LoginPage() {
             software engineer
           </h1>
           <p className="text-[10px] text-neutral-500 uppercase tracking-widest">
-            Multi-Agent Verification Status
+            Identity Verification Node
           </p>
         </div>
 
-        {/* 🟢 ส่วนแสดงสถานะการเตรียมความพร้อมของทีม */}
-        <div className="grid grid-cols-2 gap-2 text-[10px] uppercase font-bold tracking-wider">
-          <div className={`p-3 border rounded text-center ${p1Ready ? "border-[#2CFFB5]/40 bg-[#2CFFB5]/5 text-[#2CFFB5]" : "border-neutral-850 bg-neutral-900/50 text-neutral-500"}`}>
-            P1: {p1Ready ? p1Ready : "EMPTY SLOT"}
-          </div>
-          <div className={`p-3 border rounded text-center ${p2Ready ? "border-[#2CFFB5]/40 bg-[#2CFFB5]/5 text-[#2CFFB5]" : "border-neutral-850 bg-neutral-900/50 text-neutral-500"}`}>
-            P2: {p2Ready ? p2Ready : "EMPTY SLOT"}
+        {/* 🟢 ส่วนแสดงสถานะผู้ใช้งานปัจจุบันของเครื่องนี้ */}
+        <div className="text-[10px] uppercase font-bold tracking-wider">
+          <div className={`p-3 border rounded text-center ${activeUser ? "border-[#2CFFB5]/40 bg-[#2CFFB5]/5 text-[#2CFFB5]" : "border-neutral-850 bg-neutral-900/50 text-neutral-500"}`}>
+            CURRENT TERMINAL ACTIVE: {activeUser ? `${activeSlot?.toUpperCase()} (${activeUser})` : "NO ACTIVE SESSION"}
           </div>
         </div>
 
-        {/* 🕹️ ปุ่มเลือก Slot ที่จะทำภารกิจล็อกอิน */}
+        {/* 🕹️ ปุ่มเลือก Slot ยืนยันตัวตน */}
         <div className="grid grid-cols-3 gap-1 bg-[#0a0a0a] p-1 rounded border border-neutral-800">
           {(["player1", "player2", "admin"] as LoginSlot[]).map((slot) => (
             <button
@@ -208,11 +195,7 @@ export default function LoginPage() {
           </div>
 
           {errorMsg && (
-            <div className={`text-[9px] p-2.5 rounded text-center border font-bold uppercase tracking-wider ${
-              errorMsg.includes("AUTHENTICATED") || errorMsg.includes("CLEARED")
-                ? "border-[#2CFFB5]/30 bg-[#2CFFB5]/10 text-[#2CFFB5]" 
-                : "border-red-500/30 bg-red-500/10 text-red-500"
-            }`}>
+            <div className={`text-[9px] p-2.5 rounded text-center border border-red-500/30 bg-red-500/10 text-red-500 font-bold uppercase tracking-wider`}>
               {errorMsg}
             </div>
           )}
@@ -222,20 +205,9 @@ export default function LoginPage() {
             disabled={isLoading}
             className="w-full mt-2 border-2 border-[#2CFFB5] text-[#2CFFB5] hover:bg-[#2CFFB5] hover:text-black font-black text-xs py-3 rounded transition-all uppercase tracking-widest disabled:opacity-50"
           >
-            {isLoading ? "VERIFYING..." : `AUTHENTICATE ${loginSlot.toUpperCase()}`}
+            {isLoading ? "VERIFYING..." : `INITIALIZE ${loginSlot.toUpperCase()}`}
           </button>
         </form>
-
-        {/* 🚀 ปุ่มปล่อยตัวเข้าสู่ด่านเกม (จะเปิดให้กดเมื่อล็อคอินครบทั้ง 2 คนแล้ว) */}
-        {p1Ready && p2Ready && (
-          <button
-            type="button"
-            onClick={() => router.push("/stage")}
-            className="w-full bg-[#2CFFB5] text-black font-black text-xs py-4 rounded transition-all uppercase tracking-widest shadow-[0_0_20px_rgba(44,255,181,0.4)] animate-pulse"
-          >
-            ⚡ LAUNCH MISSION (START GAME) ⚡
-          </button>
-        )}
 
         {/* ส่วนปุ่ม Reset และ Footer */}
         <div className="flex flex-col items-center space-y-3 pt-2 border-t border-neutral-900">
@@ -244,7 +216,7 @@ export default function LoginPage() {
             onClick={handleResetAll}
             className="text-[9px] text-neutral-500 hover:text-red-400 uppercase tracking-widest underline cursor-pointer"
           >
-            Clear All Sessions (Reset)
+            Clear Terminal Session (Reset)
           </button>
           <p className="text-[8px] text-neutral-600 uppercase tracking-widest text-center">
             School of Information and Communication Technology, University of Phayao
