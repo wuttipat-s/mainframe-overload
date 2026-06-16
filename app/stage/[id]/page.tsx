@@ -45,7 +45,6 @@ const MOTIVATION_MSGS: Record<string, string> = {
 export default function StagePage() {
   const router = useRouter();
 
-  // ⚡ ใช้ด่านปัจจุบันคุมผ่าน State แทนการแกะพารามิเตอร์จาก URL เพื่อแก้ปัญหาหน้าจอค้าง
   const [stageId, setStageId] = useState<string>("1");
   const [username, setUsername] = useState("");
   const [playerId, setPlayerId] = useState("");
@@ -62,7 +61,6 @@ export default function StagePage() {
     if (!currentPlayerId) return;
 
     try {
-      // 1. ดึงสเตตัสความคืบหน้าของผู้เล่นปัจจุบัน
       const { data: progress } = await supabase
         .from("player_progress")
         .select("current_stage, is_completed")
@@ -70,18 +68,15 @@ export default function StagePage() {
         .maybeSingle();
 
       if (progress) {
-        // ถ้าน้องเคลียร์ด่านสุดท้ายครบเรียบร้อยแล้ว ให้สับสเตตัสไปหน้าจบเกม
         if (progress.is_completed) {
           setStageId("4"); 
           return;
         }
 
-        // ดันด่านขึ้นหน้าจออัตโนมัติ ใครตอบถูกด่านเปลี่ยนทันที ไม่ทับสิทธิ์กัน
         const currentDbStage = progress.current_stage.toString();
         setStageId(currentDbStage);
       }
 
-      // 2. ตรวจสอบการเปิด-ปิดล็อกด่านจาก Admin (ดึงเฉพาะโครงสร้างเดิม ไม่มีคำใบ้สด)
       const activeStageNum = progress ? progress.current_stage : parseInt(stageId);
       const { data: config } = await supabase
         .from("game_config")
@@ -92,7 +87,6 @@ export default function StagePage() {
       if (config) {
         setDbCorrectAnswer(config.secret_answer || "");
 
-        // บล็อกหน้าจอน้องทันทีถ้าสถานะด่านนั้นในฝั่งแอดมินถูกติ๊กปิด (is_active === false)
         if (config.is_active === false) {
           setIsLockedByAdmin(true);
         } else {
@@ -118,14 +112,12 @@ export default function StagePage() {
 
     checkAccessAndLockState(storedId);
     
-    // ตั้งเวลา Polling รันซิงก์สถานะหลังบ้านทุกๆ 3 วินาที
     const interval = setInterval(() => checkAccessAndLockState(storedId), 3000);
     return () => clearInterval(interval);
   }, [router]);
 
   const currentMission = STAGE_MISSIONS[stageId];
 
-  // หน้าจอเมื่อผู้เล่นเจาะระบบเคลียร์ครบหมดทุกด่านแล้ว
   if (!currentMission) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center bg-black font-mono p-6 text-[#2CFFB5]">
@@ -167,7 +159,6 @@ export default function StagePage() {
         const nextStageNum = parseInt(stageId) + 1;
         const isGameFinished = nextStageNum > 3;
 
-        // บันทึกขยับสถานะด่านลงคอลัมน์เดิมใน Supabase
         const { error } = await supabase
           .from("player_progress")
           .upsert({
@@ -183,7 +174,7 @@ export default function StagePage() {
 
         setMotivationMsg(MOTIVATION_MSGS[stageId] || "");
         setShowPopup(true);
-        setUserAnswer(""); // ล้างกล่องข้อความพิมพ์คำตอบเก่าออกเพื่อรอบรรจุโจทย์ใหม่
+        setUserAnswer(""); 
 
       } catch (err: any) {
         setStatusMsg(`DATABASE ERROR: ${err.message}`);
@@ -198,7 +189,6 @@ export default function StagePage() {
 
   const handleClosePopup = () => {
     setShowPopup(false);
-    // บังคับสั่งรันเช็คสเตตัสในเครื่องเพื่อรีโหลดเปลี่ยนโจทย์ไปด่านถัดไปทันที
     checkAccessAndLockState(playerId);
   };
 
@@ -237,17 +227,15 @@ export default function StagePage() {
         <div>
           <span className="text-white font-bold">OPERATOR_ID:</span> <span className="text-[#2CFFB5] font-bold">{username || "FETCHING..."}</span>
         </div>
-        {/* ⚡ เปลี่ยนจาก div เป็น button และเพิ่ม onClick */}
+        
+        {/* ⚡ ปรับปรุงจุดนี้: ย้อนกลับหน้าหลักของเกมอย่างปลอดภัย โดยไม่หลุด Session */}
         <button 
           onClick={() => {
-            if (confirm("ต้องการตัดการเชื่อมต่อ (Log out) ใช่หรือไม่?")) {
-              localStorage.clear();
-              router.push("/");
-            }
+            router.push("/stage");
           }}
-          className="text-xs border border-neutral-800 text-neutral-500 hover:text-red-500 hover:border-red-500 hover:bg-red-950/20 px-3 py-1 rounded transition-all cursor-pointer uppercase tracking-wider"
+          className="text-xs border border-[#2CFFB5]/30 text-[#2CFFB5] hover:bg-[#2CFFB5] hover:text-black px-4 py-1.5 rounded transition-all cursor-pointer uppercase tracking-wider font-bold shadow-[0_0_10px_rgba(44,255,181,0.1)]"
         >
-          SECURE CONNECTION ACTIVE (DISCONNECT)
+          ➔ BACK TO MAIN STAGE
         </button>
       </div>
 
