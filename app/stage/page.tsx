@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase"; // ⚡ เปลี่ยนมาใช้ตัวแชร์ส่วนกลาง ลดปัญหา Instance ชนกัน
+import { supabase } from "@/lib/supabase";
 
 interface StageConfig {
   level_id: number;
@@ -23,14 +23,12 @@ export default function StageSelectionPage() {
   const loadDashboardData = async (userId: string) => {
     if (!userId) return;
     try {
-      // ดึงข้อมูลความคืบหน้าผู้เล่น
       let { data: progress, error: fetchError } = await supabase
         .from("player_progress")
         .select("current_stage, is_completed")
         .eq("player_id", userId)
         .maybeSingle();
 
-      // 🚨 [FAIL-SAFE] ถ้าหากหน้า Login ทำงานพลาดแล้วไม่ยอมสร้างข้อมูล ให้หน้าจอนี้จัดการสร้างแถวใหม่ให้ทันที กันผู้เล่นติดลูปดีดออก
       if (!progress && !fetchError) {
         console.log("Fail-safe triggered: Generating missing player progress record...");
         const { data: newProgress } = await supabase
@@ -47,7 +45,6 @@ export default function StageSelectionPage() {
         setIsGameCompleted(progress.is_completed);
       }
 
-      // ดึงข้อมูลการตั้งค่าด่านจากแอดมิน
       const { data: configs } = await supabase
         .from("game_config")
         .select("level_id, unlock_time, is_active")
@@ -69,12 +66,10 @@ export default function StageSelectionPage() {
   };
 
   useEffect(() => {
-    // เช็ค Session ความปลอดภัยฝั่ง Client
     const storedId = sessionStorage.getItem("game_player_id");
     const storedName = sessionStorage.getItem("game_username");
 
     if (!storedId || !storedName) {
-      console.log("No session found, redirecting to login...");
       router.push("/");
       return;
     }
@@ -84,7 +79,6 @@ export default function StageSelectionPage() {
     loadDashboardData(storedId);
   }, [router]);
 
-  // ระบบ Polling อัปเดตสถานะด่านจากแอดมินทุก 4 วินาที
   useEffect(() => {
     if (!playerId) return;
     const interval = setInterval(() => {
@@ -93,7 +87,6 @@ export default function StageSelectionPage() {
     return () => clearInterval(interval);
   }, [playerId]);
 
-  // นาฬิกานับถอยหลัง
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
