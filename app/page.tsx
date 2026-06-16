@@ -17,8 +17,8 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      setActiveUser(localStorage.getItem("game_username"));
-      setActiveSlot(localStorage.getItem("game_slot"));
+      setActiveUser(sessionStorage.getItem("game_username"));
+      setActiveSlot(sessionStorage.getItem("game_slot"));
     }
   }, []);
 
@@ -45,17 +45,17 @@ export default function LoginPage() {
       }
 
       // ⚡ [CRITICAL FIX]: เคลียร์ค่าเก่าทั้งหมดในเครื่องทิ้งก่อน เพื่อป้องกันสิทธิ์เดิมค้าง
-      localStorage.clear();
+      sessionStorage.clear();
 
       // 2. ตรวจสอบสิทธิ์และดึงบทบาทจาก Database โดยตรง (Auto-Detect)
       // สมมติว่า data.role ใน DB เก็บค่าเป็น 'admin', 'player1', 'player2'
       const userRole = data.role; 
 
-      // 3. บันทึกข้อมูลลง LocalStorage
-      localStorage.setItem("game_player_id", data.id);
-      localStorage.setItem("game_username", data.username);
-      localStorage.setItem("game_role", userRole);
-      localStorage.setItem("game_slot", userRole); // ใช้ role เป็นตัวแยก slot ไปเลย (player1 / player2 / admin)
+      // 3. บันทึกข้อมูลลง sessionStorage
+      sessionStorage.setItem("game_player_id", data.id);
+      sessionStorage.setItem("game_username", data.username);
+      sessionStorage.setItem("game_role", userRole);
+      sessionStorage.setItem("game_slot", userRole); // ใช้ role เป็นตัวแยก slot ไปเลย (player1 / player2 / admin)
 
       // 4. แยกเส้นทางตามบทบาทภารกิจเด็ดขาด
       if (userRole === "admin") {
@@ -99,7 +99,7 @@ export default function LoginPage() {
   };
 
   const handleResetAll = () => {
-    localStorage.clear();
+    sessionStorage.clear();
     setActiveUser(null);
     setActiveSlot(null);
     setErrorMsg("ALL SESSIONS CLEARED");

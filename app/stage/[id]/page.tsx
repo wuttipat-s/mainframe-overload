@@ -99,8 +99,8 @@ export default function StagePage() {
   };
 
   useEffect(() => {
-    const storedId = localStorage.getItem("game_player_id");
-    const storedName = localStorage.getItem("game_username");
+    const storedId = sessionStorage.getItem("game_player_id");
+    const storedName = sessionStorage.getItem("game_username");
 
     if (!storedId || !storedName) {
       router.push("/");
@@ -131,7 +131,7 @@ export default function StagePage() {
           </div>
           <button 
             onClick={() => { 
-              localStorage.clear(); 
+              sessionStorage.clear(); 
               router.push("/");
             }}
             className="text-xs border border-red-500 text-red-500 px-4 py-2 rounded hover:bg-red-500 hover:text-black transition-all"
@@ -170,7 +170,7 @@ export default function StagePage() {
 
         if (error) throw error;
 
-        localStorage.setItem(`ans_${playerId}_stage_${stageId}`, userAnswer);
+        sessionStorage.setItem(`ans_${playerId}_stage_${stageId}`, userAnswer);
 
         setMotivationMsg(MOTIVATION_MSGS[stageId] || "");
         setShowPopup(true);

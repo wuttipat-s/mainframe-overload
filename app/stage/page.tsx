@@ -70,8 +70,8 @@ export default function StageSelectionPage() {
 
   useEffect(() => {
     // เช็ค Session ความปลอดภัยฝั่ง Client
-    const storedId = localStorage.getItem("game_player_id");
-    const storedName = localStorage.getItem("game_username");
+    const storedId = sessionStorage.getItem("game_player_id");
+    const storedName = sessionStorage.getItem("game_username");
 
     if (!storedId || !storedName) {
       console.log("No session found, redirecting to login...");
@@ -141,7 +141,7 @@ export default function StageSelectionPage() {
         </div>
         <button
           onClick={() => {
-            localStorage.clear();
+            sessionStorage.clear();
             router.push("/");
           }}
           className="text-xs border border-red-500/50 text-red-500 px-4 py-2 rounded hover:bg-red-500 hover:text-black transition-all uppercase tracking-wider font-bold"
