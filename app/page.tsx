@@ -140,7 +140,9 @@ export default function LoginPage() {
         <form onSubmit={handleLogin} className="space-y-4">
           <div className="space-y-1">
             <label className="text-[9px] uppercase text-neutral-400 tracking-wider">
-              Username / Access Code
+              น้องรหัสพี่เป็น ผู้ชาย หรือ ผู้หญิง <br />
+              ผู้ชาย Username = MAN <br />
+              ผู็หญิง Username = WOMAN <br />
             </label>
             <input
               type="text"
@@ -154,7 +156,7 @@ export default function LoginPage() {
 
           <div className="space-y-1">
             <label className="text-[9px] uppercase text-neutral-400 tracking-wider">
-              Password
+              Password = 123456
             </label>
             <input
               type="password"
